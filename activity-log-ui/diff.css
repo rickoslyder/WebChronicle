@@ -1,0 +1,51 @@
+/* Styles specific to the diff view */
+
+#comparison-container {
+    padding: 20px;
+}
+
+.diff-output-container {
+    border: 1px solid #ccc;
+    padding: 15px;
+    background-color: #f9f9f9;
+    font-family: monospace;
+    white-space: pre-wrap; /* Wrap long lines */
+    line-height: 1.4;
+    margin-bottom: 20px;
+}
+
+.diff-output-container span {
+    display: block; /* Ensure each part is on a new line if needed */
+}
+
+/* jsdiff default classes */
+.diff-output-container ins { /* Added lines */
+    background-color: #d4ffd4;
+    color: #008000;
+    text-decoration: none;
+}
+
+.diff-output-container del { /* Removed lines */
+    background-color: #ffd4d4;
+    color: #a00000;
+    text-decoration: none;
+}
+
+.original-content-container {
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.original-content-container h3 {
+    margin-top: 0;
+}
+
+.original-content-container pre {
+    background-color: #eee;
+    border: 1px solid #ddd;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}

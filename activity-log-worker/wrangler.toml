@@ -1,0 +1,20 @@
+name = "activity-log-worker"
+main = "./src/index.ts"
+compatibility_date = "2025-05-03"
+
+[ai]
+binding = "AI"
+
+[vars]
+AI_GATEWAY_URL = "https://gateway.ai.cloudflare.com/v1/9f737d8bcd52c18d35a03c3d02f454fe/webchronicle/workers-ai/" # endpoint for @cf/meta/llama-4-scout-17b-16e-instruct
+
+# R2 Binding for storing summaries
+[[r2_buckets]]
+binding = "ACTIVITY_SUMMARIES_BUCKET"
+bucket_name = "web-chronicle-summaries" # Correct R2 Bucket Name
+
+# D1 Binding for storing log metadata
+[[d1_databases]]
+binding = "ACTIVITY_LOG_DB" # This is the binding name used in the code (env.ACTIVITY_LOG_DB)
+database_name = "webchronicle-activity-log" # This is the name of the D1 database in Cloudflare
+database_id = "3981babd-442c-4e5e-a14f-6ee01f075d5c" # Correct D1 ID

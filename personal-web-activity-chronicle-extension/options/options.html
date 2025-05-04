@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Web Chronicle Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <h1>Web Chronicle Options</h1>
+  <form id="options-form">
+    <label for="worker-url">Worker URL:</label>
+    <input type="text" id="worker-url" name="workerUrl" required>
+
+    <label for="auth-token">Auth Token:</label>
+    <input type="password" id="auth-token" name="authToken" required>
+
+    <label for="url-blacklist">URL Blacklist (one pattern per line):</label>
+    <textarea id="url-blacklist" name="urlBlacklist" rows="5"></textarea>
+
+    <label for="min-duration">Minimum Duration (seconds):</label>
+    <input type="number" id="min-duration" name="minDurationSeconds" min="0" value="5">
+
+    <button type="submit" id="save-button">Save</button>
+    <button type="button" id="test-button">Test Connection</button>
+  </form>
+  <div id="status"></div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

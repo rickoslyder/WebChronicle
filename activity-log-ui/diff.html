@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Comparison - Web Chronicle</title>
+    <link rel="stylesheet" href="style.css"> <!-- Reuse main styles -->
+    <link rel="stylesheet" href="diff.css">   <!-- Add specific diff styles -->
+    <!-- Include jsdiff library from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.1.0/dist/diff.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Content Comparison</h1>
+        <p><a href="index.html">Back to Logs</a></p>
+    </header>
+    <main>
+        <div id="comparison-container">
+            <h2 id="loading-message">Loading content and comparing...</h2>
+            <div id="diff-output" class="diff-output-container"></div>
+            
+            <!-- Optional: Display original content -->
+            <div class="original-content-container" style="display: none;"> 
+                <h3>Original Content 1</h3>
+                <pre id="original-content-1"></pre>
+                <h3>Original Content 2</h3>
+                <pre id="original-content-2"></pre>
+            </div>
+        </div>
+    </main>
+    <script src="diff.js"></script>
+</body>
+</html>

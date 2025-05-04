@@ -1,0 +1,14 @@
+{
+  "name": "activity-log-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "wrangler build",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250503.0",
+    "itty-router": "^2.5.3",
+    "typescript": "^5.0.0"
+  }
+}

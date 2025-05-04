@@ -1,0 +1,6 @@
+# Minimal netlify.toml for Cloudflare Pages static deployment
+[build]
+  # No build command needed for static site
+  command = ""
+  # Directory containing the deploy-ready assets (index.html, etc.)
+  publish = "."
