@@ -4,6 +4,8 @@ import { logHandler } from './log-handler';
 import { getLogsHandler } from './get-logs-handler'; // Placeholder
 import { getSummaryHandler } from './get-summary-handler'; // Placeholder
 import { getContentHandler } from './get-content-handler';
+import { searchHandler } from './search-handler'; // Import the new search handler
+import { backfillHandler } from './backfill-handler'; // Import the backfill handler
 import { Env } from './types';
 
 // Create a new Router
@@ -41,6 +43,9 @@ router.post('/log', authHandler, logHandler); // Use the new logHandler
 // Get recent log entries
 router.get('/logs', getLogsHandler);
 
+// Semantic search endpoint
+router.post('/search', authHandler, searchHandler);
+
 // Get summary for a specific log entry
 router.get('/logs/:id/summary', getSummaryHandler);
 
@@ -48,6 +53,9 @@ router.get('/logs/:id/summary', getSummaryHandler);
 router.get('/log-content/:id', getContentHandler);
 
 // --- End NEW API Endpoints ---
+
+// --- Admin Endpoints ---
+router.get('/admin/backfill-embeddings', authHandler, backfillHandler);
 
 // Catch-all for 404s
 router.all('*', () => new Response('Not Found', { status: 404 }));

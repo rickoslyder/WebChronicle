@@ -1,0 +1,22 @@
+{
+  "name": "personal-web-activity-chronicle-extension",
+  "version": "1.0.0",
+  "description": "This Chrome Extension logs your web activity (URLs, titles, scroll depth) and sends it to a Cloudflare Worker for processing (summarization, tagging, storage).",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild content/scraper.js --bundle --outfile=dist/content.js --format=iife --minify --sourcemap && esbuild content/content-script.js --bundle --outfile=dist/scroll-tracker.js --format=iife --minify --sourcemap"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.3"
+  }
+}

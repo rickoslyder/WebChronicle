@@ -6,3 +6,7 @@ export const STORAGE_KEYS = {
   URL_BLACKLIST: 'urlBlacklist', // Array of strings
   MIN_DURATION: 'minDurationSeconds' // Number
 };
+
+// For offline log synchronization
+export const SYNC_ALARM_NAME = 'syncOfflineLogsAlarm';
+export const SYNC_INTERVAL_MINUTES = 5; // Sync every 5 minutes

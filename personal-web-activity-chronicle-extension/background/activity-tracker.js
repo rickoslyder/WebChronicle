@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '../lib/constants.js';
-import { sendLogData } from './cloudflare-client.js';
+import { sendActivityLog } from './cloudflare-client.js';
 
 // --- State ---
 let activeTabId = null;
@@ -19,6 +19,8 @@ const DEFAULT_MIN_DURATION_SECONDS = 5; // Default minimum time
 
 async function handleTabEnd(endedTabId, endedTabInfo) {
   if (!endedTabInfo || !endedTabInfo.startTimestamp) return;
+  // Ensure tabId is treated as a number for API calls
+  const numericTabId = Number(endedTabId);
 
   const endTimestamp = Date.now();
   const timeSpentSeconds = Math.round((endTimestamp - endedTabInfo.startTimestamp) / 1000);
@@ -55,14 +57,83 @@ async function handleTabEnd(endedTabId, endedTabInfo) {
       return;
     }
 
-    // Now safe to proceed with scraping and sending
-    // 2. Get scrape result from content script (moved inside the checks)
-    console.log(`[Tracker] Requesting scrape from tab ${endedTabId}`);
-    const scrapeResult = await chrome.tabs.sendMessage(endedTabId, { type: 'REQUEST_SCRAPE' });
+    // Now safe to proceed with getting text and scroll data
+    // 2a. Execute scraper script to trigger text extraction
+    let textContent = ''; // Initialize textContent
+    try {
+      console.log(`[Tracker] Executing scraper script in tab ${numericTabId} to trigger message sending.`);
+      // Promise to wait for the scraper result message
+      const scraperResultPromise = new Promise((resolveScraperResult, rejectScraperResult) => {
+        const listener = (message, sender, sendResponse) => {
+          // Check if the message is from the correct tab and is the scraper result
+          if (message.type === 'SCRAPER_RESULT' && sender.tab && sender.tab.id === numericTabId) {
+            const receivedText = message.textContent || '';
+            console.log(`[Tracker] Received SCRAPER_RESULT from tab ${numericTabId}. Length: ${receivedText.length}. Preparing to resolve promise with this text.`);
+            chrome.runtime.onMessage.removeListener(listener); // Clean up listener
+            resolveScraperResult(receivedText); // Resolve with the text content
+            return false; // Indicate no further response from this listener
+          }
+          // Listen for SCRAPER_ERROR as well
+          if (message.type === 'SCRAPER_ERROR' && sender.tab && sender.tab.id === numericTabId) {
+            console.warn(`[Tracker] Received SCRAPER_ERROR from tab ${numericTabId}:`, message.error);
+            chrome.runtime.onMessage.removeListener(listener); // Clean up listener
+            resolveScraperResult(''); // Resolve with empty string on scraper error
+            return false;
+          }
+          return false; // Important for other listeners
+        };
+        chrome.runtime.onMessage.addListener(listener);
 
-    if (!scrapeResult) {
-      console.warn(`[Tracker] No scrape result received from tab ${endedTabId}`);
-      return; // Or send log without text/scroll?
+        // Timeout for waiting for the scraper message
+        setTimeout(() => {
+          chrome.runtime.onMessage.removeListener(listener); // Clean up listener on timeout
+          console.warn(`[Tracker] Timeout waiting for SCRAPER_RESULT or SCRAPER_ERROR from tab ${numericTabId}`);
+          // Resolve with empty string on timeout, so await scraperResultPromise doesn't throw an unhandled rejection
+          resolveScraperResult('');
+        }, 5000); // 5-second timeout (adjust as needed)
+      });
+
+      // Execute the scraper script
+      const scriptResults = await chrome.scripting.executeScript({
+        target: { tabId: numericTabId },
+        files: ['dist/content.js'], // Execute the bundled scraper
+      });
+
+      // Log the result of the script injection/execution attempt, but don't gate textContent on it.
+      if (!scriptResults || scriptResults.length === 0 || scriptResults[0].result === undefined) {
+        console.warn(`[Tracker] Scraper script injection may have failed or returned no definite result (undefined) for tab ${numericTabId}. Result:`, scriptResults);
+      } else if (scriptResults[0].result === null) {
+        console.warn(`[Tracker] Scraper script returned null (possibly due to premature page close) for tab ${numericTabId}.`);
+      } else if (scriptResults[0].result === false) {
+        console.warn(`[Tracker] Scraper script in tab ${numericTabId} explicitly returned false (indicated an internal error).`);
+      } else {
+        console.log(`[Tracker] Scraper script injection appears successful (returned ${scriptResults[0].result}) for tab ${numericTabId}.`);
+      }
+
+      // Primary way to get textContent is now via the message listener and scraperResultPromise
+      console.log(`[Tracker] Awaiting text content from SCRAPER_RESULT message for tab ${numericTabId}.`);
+      textContent = await scraperResultPromise;
+      console.log(`[Tracker] After awaiting scraperResultPromise for tab ${numericTabId}, final textContent length: ${textContent?.length ?? 0}.`);
+
+    } catch (err) {
+      console.error(`[Tracker] Error during scraper script execution or message handling for tab ${numericTabId}:`, err);
+      textContent = ''; // Default to empty on any overarching error
+    }
+
+    // 2b. Request scroll data from the other content script
+    let maxScrollPercent = 0;
+    try {
+      console.log(`[Tracker] Requesting scroll data from tab ${numericTabId}`);
+      const scrollResult = await chrome.tabs.sendMessage(numericTabId, { type: 'REQUEST_SCROLL_DATA' });
+      if (scrollResult && typeof scrollResult.maxScrollPercent === 'number') {
+        maxScrollPercent = scrollResult.maxScrollPercent;
+        console.log(`[Tracker] Received max scroll percent from tab ${numericTabId}: ${maxScrollPercent}%`);
+      } else {
+        console.warn(`[Tracker] Invalid or no scroll result received from tab ${numericTabId}. Result:`, scrollResult);
+      }
+    } catch (err) {
+      console.error(`[Tracker] Error requesting scroll data from tab ${numericTabId}:`, err);
+      // Proceed with 0 scroll if message fails
     }
 
     // 3. Construct payload
@@ -73,8 +144,8 @@ async function handleTabEnd(endedTabId, endedTabInfo) {
       startTimestamp: endedTabInfo.startTimestamp,
       endTimestamp,
       timeSpentSeconds,
-      maxScrollPercent: scrapeResult.maxScrollPercent,
-      textContent: scrapeResult.textContent, // Include scraped text
+      maxScrollPercent: maxScrollPercent,
+      textContent: typeof textContent === 'string' ? textContent : '', // Ensure it's a string
       processedAt: 0 // Placeholder, Worker will set this
       // tagsJson will be added by the worker
       // summaryR2Key will be added by the worker
@@ -82,12 +153,14 @@ async function handleTabEnd(endedTabId, endedTabInfo) {
 
     // 4. Send payload to logHandler
     console.log(`[Tracker] Sending log data for tab ${endedTabId}`);
-    const sendResult = await sendLogData(workerUrl, authToken, logPayload);
+    const sendResult = await sendActivityLog(workerUrl, authToken, logPayload);
 
-    if (sendResult.success) {
-      console.log(`[Tracker] Successfully sent log data for tab ${endedTabId}`);
+    if (sendResult.success && !sendResult.storedOffline) {
+      console.log(`[Tracker] Successfully sent log data for tab ${endedTabId} to worker.`);
+    } else if (sendResult.success && sendResult.storedOffline) {
+      console.log(`[Tracker] Failed to send log data for tab ${endedTabId} to worker, but it was successfully stored offline. Message: ${sendResult.message}`);
     } else {
-      console.error(`[Tracker] Failed to send log data for tab ${endedTabId}:`, sendResult.error);
+      console.error(`[Tracker] Failed to send log data for tab ${endedTabId} and failed to store offline:`, sendResult.error, sendResult.idbSaveError);
     }
 
   } catch (error) {

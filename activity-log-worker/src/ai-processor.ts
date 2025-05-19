@@ -81,3 +81,45 @@ JSON Response:`;
     return { summary: truncatedText.slice(0, 200) + '... (AI processing error)', tagsJson: '[]' };
   }
 }
+
+/**
+ * Generates a vector embedding for the given text using the AI Gateway.
+ */
+export async function generateEmbedding(ai: any, textInput: string): Promise<number[] | null> {
+  if (!textInput || textInput.trim().length === 0) {
+    console.log('[AI Processor - Embedding] No text content to generate embedding for.');
+    return null;
+  }
+
+  // Embedding models have token limits. bge-small-en-v1.5 has a max sequence length of 512 tokens.
+  // A simple character limit can act as a safeguard. Average 4 chars/token. 512*4 = 2048.
+  const MAX_EMBEDDING_TEXT_LENGTH = 2000; // Keep it slightly under the theoretical max character count
+  const text = textInput.length > MAX_EMBEDDING_TEXT_LENGTH
+    ? textInput.slice(0, MAX_EMBEDDING_TEXT_LENGTH)
+    : textInput;
+
+  try {
+    console.log(`[AI Processor - Embedding] Requesting embedding for text (original length: ${textInput.length}, effective length: ${text.length}).`);
+    const model = '@cf/baai/bge-small-en-v1.5';
+    const response = await ai.run(model, { text });
+
+    // Expected response structure: { shape: [number_of_inputs, dimensions], data: [ [embedding_vector_for_input1], ... ] }
+    if (response && response.data && Array.isArray(response.data) && response.data.length > 0 &&
+        Array.isArray(response.data[0]) && response.data[0].length > 0) {
+      console.log(`[AI Processor - Embedding] Successfully generated embedding. Dimensions: ${response.data[0].length}`);
+      return response.data[0]; // Return the first (and only) embedding vector
+    } else {
+      console.error('[AI Processor - Embedding] Failed to generate embedding or AI response format is unexpected.');
+      // Log the raw response for debugging, careful with large responses in production logs
+      try {
+        console.error('[AI Processor - Embedding] Raw AI response:', JSON.stringify(response).slice(0, 500));
+      } catch (e) {
+        console.error('[AI Processor - Embedding] Raw AI response (unstringifiable):', response);
+      }
+      return null;
+    }
+  } catch (error) {
+    console.error('[AI Processor - Embedding] Error calling AI Gateway for embedding:', error);
+    return null;
+  }
+}

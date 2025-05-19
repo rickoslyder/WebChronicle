@@ -1,26 +1,25 @@
 // Track max scroll depth
 let maxScrollPercent = 0;
-function updateScroll() {
-  const scrollY = window.scrollY || window.pageYOffset;
-  const totalHeight = document.body.scrollHeight - window.innerHeight;
-  if (totalHeight > 0) {
-    const percent = Math.round((scrollY / totalHeight) * 100);
-    if (percent > maxScrollPercent) maxScrollPercent = percent;
-  }
-}
-window.addEventListener('scroll', updateScroll);
+import { debounce } from '../lib/utils.js';
 
-// Listen for scrape requests from background
+function updateScrollDepth() {
+  const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  if (scrollHeight === 0) {
+    maxScrollPercent = 100; // Fully scrolled if no scrollbar (or content fits)
+    return;
+  }
+  const currentScroll = window.scrollY;
+  maxScrollPercent = Math.max(maxScrollPercent, Math.round((currentScroll / scrollHeight) * 100));
+}
+window.addEventListener('scroll', debounce(updateScrollDepth, 200), { passive: true });
+
+// Listen for requests from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'REQUEST_SCRAPE') {
-    updateScroll(); // Ensure scroll percentage is up-to-date
-    const textContent = window.scrapeVisibleText();
-    // Respond directly with the scraped data
-    sendResponse({
-      textContent,
-      maxScrollPercent
-    });
-    // Return true to indicate async response (although sendResponse is sync here, it's good practice)
+  if (message.type === 'REQUEST_SCROLL_DATA') {
+    updateScrollDepth(); // Ensure scroll percentage is up-to-date
+    // Respond with the current max scroll percentage
+    sendResponse({ maxScrollPercent });
+    // Return true to indicate async response (or potential async in future)
     return true;
   }
 });

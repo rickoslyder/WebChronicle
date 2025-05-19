@@ -1,16 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 
-import { processTextWithAI } from './ai-processor';
-import type { LogDataPayload } from './types';
+import { processTextWithAI, generateEmbedding } from './ai-processor';
+import type { LogDataPayload, Env } from './types';
 import { SimHash, Comparator } from './simhash-util';
-
-// Define Env interface for better type safety
-interface Env {
-  AI: any; // AI Gateway binding
-  ACTIVITY_SUMMARIES_BUCKET: R2Bucket; // R2 binding
-  ACTIVITY_LOG_DB: D1Database; // D1 binding
-  AUTH_TOKEN: string; // Secret
-}
 
 // Helper function to convert ArrayBuffer to hex string (for SHA-256 hash)
 async function bufferToHex(buffer: ArrayBuffer): Promise<string> {
@@ -28,7 +20,7 @@ async function calculateHash(text: string): Promise<string> {
 }
 
 // Define Simhash threshold (adjust as needed)
-const SIMHASH_THRESHOLD = 5;
+const SIMHASH_THRESHOLD = 10;
 
 export async function logHandler(request: Request, env: Env) {
   let logData: (LogDataPayload & { id: string, processedAt: number }) | null = null; // Add id/processedAt, init to null
@@ -161,7 +153,38 @@ export async function logHandler(request: Request, env: Env) {
 
       if (d1Result.success) {
         console.log(`[Log Handler] Successfully stored metadata in D1 for log ID: ${logData.id}`);
-        return new Response('Log received', { status: 201 }); // 201 Created
+
+        // --- Vectorize Embedding and Insertion ---
+        if (summary && summary.trim() !== '' && !summary.includes('(AI processing failed)') && !summary.includes('(AI processing error)')) {
+            try {
+                console.log(`[Log Handler - Vectorize] Generating embedding for summary of log ID: ${logData.id}`);
+                const embeddingVector = await generateEmbedding(env.AI, summary);
+
+                if (embeddingVector) {
+                    console.log(`[Log Handler - Vectorize] Embedding generated for log ID: ${logData.id}. Dimensions: ${embeddingVector.length}`);
+                    const vectorToUpsert = {
+                        id: logData.id, // Use the D1 log ID as the vector ID
+                        values: embeddingVector,
+                        // metadata: { url: logData.url, title: logData.title } // Optional: add metadata if needed later
+                    };
+                    await env.VECTORIZE.upsert([vectorToUpsert]);
+                    console.log(`[Log Handler - Vectorize] Successfully upserted vector for log ID: ${logData.id} into Vectorize index.`);
+                } else {
+                    console.warn(`[Log Handler - Vectorize] Embedding generation returned null for log ID: ${logData.id}. Skipping Vectorize upsert.`);
+                }
+            } catch (vectorizeError) {
+                console.error(`[Log Handler - Vectorize] Error during embedding generation or Vectorize upsert for log ID: ${logData.id}:`, vectorizeError);
+                // Non-critical error for the main log processing. Log and continue.
+            }
+        } else {
+            console.log(`[Log Handler - Vectorize] Skipping embedding for log ID: ${logData.id} due to empty, placeholder, or error summary.`);
+        }
+        // --- End Vectorize Embedding and Insertion ---
+
+        return new Response(JSON.stringify({ message: 'Log received and processed.', logId: logData.id }), { 
+          status: 201, 
+          headers: { 'Content-Type': 'application/json' }
+        }); // 201 Created
       } else {
         console.error(`[Log Handler] D1 Insert failed for log ID: ${logData.id}`, d1Result.error);
         // Attempt to clean up R2 object if D1 fails? Maybe not necessary.

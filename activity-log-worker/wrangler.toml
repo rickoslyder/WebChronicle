@@ -18,3 +18,11 @@ bucket_name = "web-chronicle-summaries" # Correct R2 Bucket Name
 binding = "ACTIVITY_LOG_DB" # This is the binding name used in the code (env.ACTIVITY_LOG_DB)
 database_name = "webchronicle-activity-log" # This is the name of the D1 database in Cloudflare
 database_id = "3981babd-442c-4e5e-a14f-6ee01f075d5c" # Correct D1 ID
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "webchronicle"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
