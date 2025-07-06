@@ -8,7 +8,7 @@ WebChronicle consists of three main components:
 
 1. **Chrome Extension** - Captures browsing activity, content, and scroll behavior
 2. **Cloudflare Worker** - Backend API for processing, storing, and searching activity logs
-3. **Activity Log UI** - Modern web interface for viewing and analyzing logged activities
+3. **Activity Log UI** - Modern React-based web interface for viewing and analyzing logged activities
 
 ## Features
 
@@ -46,7 +46,12 @@ npm install
    - Copy `activity-log-worker/.env.local.example` to `activity-log-worker/.env.local`
    - Add your Cloudflare API token
 
-2. **UI Configuration**:
+2. **UI Configuration** (New React UI):
+   - Navigate to `web-chronicle-ui/`
+   - Copy `.env.example` to `.env.local`
+   - Update with your worker URL and auth token
+   
+   For legacy vanilla JS UI:
    - Copy `activity-log-ui/config.template.js` to `activity-log-ui/config.js`
    - Update with your worker URL and auth token
 
@@ -95,10 +100,15 @@ WebChronicle/
 │   ├── src/                  # TypeScript source files
 │   ├── schema.sql           # D1 database schema
 │   └── wrangler.toml        # Cloudflare configuration
-├── activity-log-ui/         # Web interface
+├── activity-log-ui/         # Legacy vanilla JS interface
 │   ├── index.html          # Enhanced UI with dark mode
 │   ├── script.js           # UI logic with semantic search
 │   └── style.css           # Modern styling
+├── web-chronicle-ui/        # Modern React UI (NEW)
+│   ├── app/                # Next.js app router pages
+│   ├── components/         # React components
+│   ├── lib/                # Utilities and API client
+│   └── package.json        # Dependencies and scripts
 └── personal-web-activity-chronicle-extension/  # Chrome extension
     ├── background/         # Service worker and tracking
     ├── content/           # Content scripts
@@ -107,7 +117,9 @@ WebChronicle/
 
 ## Technologies Used
 
-- **Frontend**: Vanilla JavaScript, Chart.js, CSS3
+- **Frontend**: 
+  - **New UI**: Next.js 15, React 19, TypeScript, TanStack Query, Zustand, Tailwind CSS v4
+  - **Legacy UI**: Vanilla JavaScript, Chart.js, CSS3
 - **Backend**: Cloudflare Workers, TypeScript, Itty Router
 - **Storage**: D1 (metadata), R2 (content), Vectorize (embeddings)
 - **AI**: Cloudflare AI (Llama model for summarization)

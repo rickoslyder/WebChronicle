@@ -65,7 +65,10 @@
       "mcp__playwright__browser_network_requests",
       "WebFetch(domain:web-chronicle-ui.pages.dev)",
       "mcp__cloudflare-bindings__d1_database_query",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "Bash(git update-index:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   },

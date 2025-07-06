@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-background: #ffffff;
+  --color-foreground: #0a0a0a;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #18181b;
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #18181b;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e4e4e7;
+  --color-input: #e4e4e7;
+  --color-ring: #2563eb;
+  
+  /* Dark mode colors */
+  @media (prefers-color-scheme: dark) {
+    --color-background: #0a0a0a;
+    --color-foreground: #fafafa;
+    --color-muted: #27272a;
+    --color-muted-foreground: #a1a1aa;
+    --color-primary: #3b82f6;
+    --color-primary-foreground: #ffffff;
+    --color-secondary: #27272a;
+    --color-secondary-foreground: #fafafa;
+    --color-accent: #27272a;
+    --color-accent-foreground: #fafafa;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #27272a;
+    --color-input: #27272a;
+    --color-ring: #3b82f6;
+  }
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-md;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Custom utilities */
+.animate-in {
+  animation: animateIn 0.3s ease-in-out;
+}
+
+@keyframes animateIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
