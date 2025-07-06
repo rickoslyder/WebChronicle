@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { 
   Clock, 
   Globe, 
@@ -9,7 +10,8 @@ import {
   Tag,
   ExternalLink,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search
 } from 'lucide-react'
 import { ActivityLogWithTags } from '@/types'
 import { cn, formatDate, formatDuration, getRelativeTime } from '@/lib/utils'
@@ -23,6 +25,7 @@ interface ActivityCardProps {
 
 export function ActivityCard({ activity, isCompact = false }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const router = useRouter()
   const showSummaries = useSettingsStore((state) => state.showSummaries)
   const { data: summaryData, isLoading: isSummaryLoading } = useSummary(
     isExpanded && showSummaries ? activity.id : ''
@@ -30,6 +33,12 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
 
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded)
+  }
+
+  const handleFindSimilar = () => {
+    // Navigate to search page with the activity title as query
+    const searchQuery = encodeURIComponent(activity.title || activity.url)
+    router.push(`/search?q=${searchQuery}`)
   }
 
   if (isCompact) {
@@ -113,6 +122,18 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
           ))}
         </div>
       )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          onClick={handleFindSimilar}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-secondary hover:bg-secondary/80 rounded-md transition-colors"
+          title="Find similar activities"
+        >
+          <Search className="h-4 w-4" />
+          Find Similar
+        </button>
+      </div>
 
       {/* Summary Section */}
       {showSummaries && (

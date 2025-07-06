@@ -68,7 +68,8 @@
       "mcp__playwright__browser_wait_for",
       "Bash(git update-index:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "mcp__playwright__browser_snapshot"
     ],
     "deny": []
   },

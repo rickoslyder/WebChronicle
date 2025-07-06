@@ -63,7 +63,7 @@ export function useAnalytics(days: number = 30) {
 
 export function useSearch(query: string, limit: number = 20) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.search, query, limit],
+    queryKey: [...QUERY_KEYS.search(query), limit],
     queryFn: () => api.search(query, limit),
     enabled: !!query && query.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
