@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Command,
   Brain,
-  Download
+  Download,
+  FolderOpen
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings-store'
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/', label: 'Timeline', icon: Home },
   { href: '/search', label: 'Search', icon: Search },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/collections', label: 'Collections', icon: FolderOpen },
   { href: '/insights', label: 'Insights', icon: Brain },
   { href: '/export', label: 'Export', icon: Download },
 ]
