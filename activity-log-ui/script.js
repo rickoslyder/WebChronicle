@@ -79,6 +79,11 @@ class WebChronicle {
         document.getElementById('compare-fab').addEventListener('click', () => {
             this.compareSelected();
         });
+        
+        // Settings button
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            this.showSettings();
+        });
     }
     
     setupTheme() {
@@ -263,7 +268,7 @@ class WebChronicle {
     
     async loadSummary(logId) {
         try {
-            const response = await fetch(`${this.workerUrl}/log-summary/${logId}`, {
+            const response = await fetch(`${this.workerUrl}/logs/${logId}/summary`, {
                 headers: {
                     'X-Auth-Token': this.authToken
                 }
@@ -275,9 +280,22 @@ class WebChronicle {
                 if (summaryEl && data.summary) {
                     summaryEl.textContent = data.summary;
                 }
+            } else {
+                // Show placeholder if summary not found
+                const summaryEl = document.getElementById(`summary-${logId}`);
+                if (summaryEl) {
+                    summaryEl.textContent = 'No summary available';
+                    summaryEl.style.fontStyle = 'italic';
+                    summaryEl.style.opacity = '0.7';
+                }
             }
         } catch (error) {
             console.error('Error loading summary:', error);
+            const summaryEl = document.getElementById(`summary-${logId}`);
+            if (summaryEl) {
+                summaryEl.textContent = 'Failed to load summary';
+                summaryEl.style.color = 'var(--color-error)';
+            }
         }
     }
     
@@ -706,6 +724,358 @@ class WebChronicle {
     showError(message) {
         const grid = document.getElementById('activity-grid');
         grid.innerHTML = `<div class="error">${message}</div>`;
+    }
+    
+    // Filter modal implementations
+    showDateFilter() {
+        const modal = this.createModal('Filter by Date Range', `
+            <div class="filter-form">
+                <div class="form-group">
+                    <label>From Date:</label>
+                    <input type="date" id="filter-date-from" max="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label>To Date:</label>
+                    <input type="date" id="filter-date-to" max="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="filter-presets">
+                    <button class="preset-btn" data-preset="today">Today</button>
+                    <button class="preset-btn" data-preset="week">This Week</button>
+                    <button class="preset-btn" data-preset="month">This Month</button>
+                </div>
+            </div>
+        `);
+        
+        // Handle presets
+        modal.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.dataset.preset;
+                const today = new Date();
+                const fromInput = modal.querySelector('#filter-date-from');
+                const toInput = modal.querySelector('#filter-date-to');
+                
+                toInput.value = today.toISOString().split('T')[0];
+                
+                switch(preset) {
+                    case 'today':
+                        fromInput.value = today.toISOString().split('T')[0];
+                        break;
+                    case 'week':
+                        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        fromInput.value = weekAgo.toISOString().split('T')[0];
+                        break;
+                    case 'month':
+                        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        fromInput.value = monthAgo.toISOString().split('T')[0];
+                        break;
+                }
+                
+                this.applyDateFilter();
+                this.closeModal(modal);
+            });
+        });
+        
+        // Apply button
+        const applyBtn = modal.querySelector('.modal-apply');
+        applyBtn.addEventListener('click', () => {
+            this.applyDateFilter();
+            this.closeModal(modal);
+        });
+    }
+    
+    showDomainFilter() {
+        // Get unique domains from logs
+        const domains = [...new Set(this.logs.map(log => new URL(log.url).hostname))];
+        domains.sort();
+        
+        const modal = this.createModal('Filter by Domain', `
+            <div class="filter-form">
+                <input type="text" id="domain-search" placeholder="Search domains..." class="domain-search">
+                <div class="domain-list">
+                    ${domains.map(domain => `
+                        <label class="domain-item">
+                            <input type="checkbox" value="${domain}" class="domain-checkbox">
+                            <span>${domain}</span>
+                            <span class="domain-count">${this.logs.filter(log => new URL(log.url).hostname === domain).length}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `);
+        
+        // Search functionality
+        const searchInput = modal.querySelector('#domain-search');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            modal.querySelectorAll('.domain-item').forEach(item => {
+                const domain = item.querySelector('span').textContent.toLowerCase();
+                item.style.display = domain.includes(query) ? 'flex' : 'none';
+            });
+        });
+        
+        // Apply button
+        const applyBtn = modal.querySelector('.modal-apply');
+        applyBtn.addEventListener('click', () => {
+            const selected = [...modal.querySelectorAll('.domain-checkbox:checked')].map(cb => cb.value);
+            this.applyDomainFilter(selected);
+            this.closeModal(modal);
+        });
+    }
+    
+    showTagFilter() {
+        // Get all unique tags
+        const allTags = new Set();
+        this.logs.forEach(log => {
+            try {
+                const tags = JSON.parse(log.tagsJson || '[]');
+                tags.forEach(tag => allTags.add(tag));
+            } catch (e) {}
+        });
+        
+        const tags = [...allTags].sort();
+        
+        const modal = this.createModal('Filter by Tags', `
+            <div class="filter-form">
+                <div class="tag-cloud">
+                    ${tags.map(tag => `
+                        <button class="tag-filter-btn" data-tag="${tag}">
+                            ${tag}
+                            <span class="tag-count">${this.logs.filter(log => {
+                                try {
+                                    return JSON.parse(log.tagsJson || '[]').includes(tag);
+                                } catch (e) { return false; }
+                            }).length}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                ${tags.length === 0 ? '<p class="no-tags">No tags found in your activities</p>' : ''}
+            </div>
+        `);
+        
+        // Tag click handler
+        modal.querySelectorAll('.tag-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.filterByTag(btn.dataset.tag);
+                this.closeModal(modal);
+            });
+        });
+    }
+    
+    // Modal helper methods
+    createModal(title, content) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>${title}</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-cancel">Cancel</button>
+                    <button class="modal-apply">Apply</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close handlers
+        modal.querySelector('.modal-close').addEventListener('click', () => this.closeModal(modal));
+        modal.querySelector('.modal-cancel').addEventListener('click', () => this.closeModal(modal));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.closeModal(modal);
+        });
+        
+        return modal;
+    }
+    
+    closeModal(modal) {
+        modal.remove();
+    }
+    
+    applyDateFilter() {
+        const fromDate = document.getElementById('filter-date-from')?.value;
+        const toDate = document.getElementById('filter-date-to')?.value;
+        
+        if (!fromDate && !toDate) {
+            this.filteredLogs = [...this.logs];
+        } else {
+            const from = fromDate ? new Date(fromDate).getTime() : 0;
+            const to = toDate ? new Date(toDate + 'T23:59:59').getTime() : Date.now();
+            
+            this.filteredLogs = this.logs.filter(log => {
+                const logTime = log.startTimestamp;
+                return logTime >= from && logTime <= to;
+            });
+        }
+        
+        this.renderActivityGrid();
+        this.showToast(`Filtered to ${this.filteredLogs.length} activities`, 'info');
+    }
+    
+    applyDomainFilter(domains) {
+        if (domains.length === 0) {
+            this.filteredLogs = [...this.logs];
+        } else {
+            this.filteredLogs = this.logs.filter(log => {
+                const domain = new URL(log.url).hostname;
+                return domains.includes(domain);
+            });
+        }
+        
+        this.renderActivityGrid();
+        this.showToast(`Filtered to ${this.filteredLogs.length} activities`, 'info');
+    }
+    
+    // Settings implementation
+    showSettings() {
+        const modal = this.createModal('Settings', `
+            <div class="settings-form">
+                <div class="settings-section">
+                    <h4>Display Settings</h4>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="settings-auto-refresh" ${localStorage.getItem('autoRefresh') === 'true' ? 'checked' : ''}>
+                            Auto-refresh activities every 30 seconds
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="settings-show-summaries" ${localStorage.getItem('showSummaries') !== 'false' ? 'checked' : ''}>
+                            Show AI summaries in cards
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Default view:
+                            <select id="settings-default-view">
+                                <option value="timeline" ${localStorage.getItem('defaultView') === 'timeline' ? 'selected' : ''}>Timeline</option>
+                                <option value="insights" ${localStorage.getItem('defaultView') === 'insights' ? 'selected' : ''}>Insights</option>
+                                <option value="search" ${localStorage.getItem('defaultView') === 'search' ? 'selected' : ''}>Search</option>
+                                <option value="analytics" ${localStorage.getItem('defaultView') === 'analytics' ? 'selected' : ''}>Analytics</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Data Management</h4>
+                    <div class="form-group">
+                        <button class="btn-secondary" id="export-data">Export All Data</button>
+                        <button class="btn-secondary" id="clear-cache">Clear Cache</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>API Configuration</h4>
+                    <div class="form-group">
+                        <label>
+                            Worker URL:
+                            <input type="text" id="settings-worker-url" value="${this.workerUrl}" placeholder="https://your-worker.workers.dev">
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Auth Token:
+                            <input type="password" id="settings-auth-token" value="${this.authToken}" placeholder="Your authentication token">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `);
+        
+        // Export data handler
+        modal.querySelector('#export-data').addEventListener('click', () => {
+            this.exportData();
+        });
+        
+        // Clear cache handler
+        modal.querySelector('#clear-cache').addEventListener('click', () => {
+            if (confirm('This will clear all cached data. Continue?')) {
+                localStorage.removeItem('cachedLogs');
+                localStorage.removeItem('cachedSummaries');
+                this.showToast('Cache cleared', 'success');
+            }
+        });
+        
+        // Apply button saves settings
+        const applyBtn = modal.querySelector('.modal-apply');
+        applyBtn.textContent = 'Save Settings';
+        applyBtn.addEventListener('click', () => {
+            // Save display settings
+            localStorage.setItem('autoRefresh', modal.querySelector('#settings-auto-refresh').checked);
+            localStorage.setItem('showSummaries', modal.querySelector('#settings-show-summaries').checked);
+            localStorage.setItem('defaultView', modal.querySelector('#settings-default-view').value);
+            
+            // Save API settings if changed
+            const newWorkerUrl = modal.querySelector('#settings-worker-url').value;
+            const newAuthToken = modal.querySelector('#settings-auth-token').value;
+            
+            if (newWorkerUrl !== this.workerUrl || newAuthToken !== this.authToken) {
+                // Update config.js would require server-side handling
+                // For now, just update in memory and localStorage
+                this.workerUrl = newWorkerUrl;
+                this.authToken = newAuthToken;
+                localStorage.setItem('customWorkerUrl', newWorkerUrl);
+                localStorage.setItem('customAuthToken', newAuthToken);
+                
+                // Reload logs with new settings
+                this.loadLogs();
+            }
+            
+            this.closeModal(modal);
+            this.showToast('Settings saved', 'success');
+            
+            // Apply auto-refresh if enabled
+            if (localStorage.getItem('autoRefresh') === 'true') {
+                this.startAutoRefresh();
+            } else {
+                this.stopAutoRefresh();
+            }
+        });
+    }
+    
+    exportData() {
+        const data = {
+            logs: this.logs,
+            exportDate: new Date().toISOString(),
+            totalActivities: this.logs.length,
+            dateRange: {
+                from: new Date(Math.min(...this.logs.map(l => l.startTimestamp))).toISOString(),
+                to: new Date(Math.max(...this.logs.map(l => l.startTimestamp))).toISOString()
+            }
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `web-chronicle-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showToast(`Exported ${this.logs.length} activities`, 'success');
+    }
+    
+    startAutoRefresh() {
+        if (this.autoRefreshInterval) return;
+        
+        this.autoRefreshInterval = setInterval(() => {
+            this.loadLogs();
+        }, 30000); // 30 seconds
+    }
+    
+    stopAutoRefresh() {
+        if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+            this.autoRefreshInterval = null;
+        }
     }
 }
 

@@ -6,6 +6,7 @@ import { getSummaryHandler } from './get-summary-handler'; // Placeholder
 import { getContentHandler } from './get-content-handler';
 import { searchHandler } from './search-handler'; // Import the new search handler
 import { backfillHandler } from './backfill-handler'; // Import the backfill handler
+import { browserScreenshotHandler, browserExtractHandler, browserPdfHandler } from './browser-handler';
 import { Env } from './types';
 import { config } from './config';
 
@@ -54,13 +55,13 @@ router.post('/log', authHandler, logHandler); // Use the new logHandler
 
 // --- NEW API Endpoints for UI ---
 // Get recent log entries
-router.get('/logs', getLogsHandler);
+router.get('/logs', authHandler, getLogsHandler);
 
 // Semantic search endpoint
 router.post('/search', authHandler, searchHandler);
 
 // Get summary for a specific log entry
-router.get('/logs/:id/summary', getSummaryHandler);
+router.get('/logs/:id/summary', authHandler, getSummaryHandler);
 
 // GET /log-content/:id - Fetch full text content for a specific log entry
 router.get('/log-content/:id', getContentHandler);
@@ -69,6 +70,11 @@ router.get('/log-content/:id', getContentHandler);
 
 // --- Admin Endpoints ---
 router.get('/admin/backfill-embeddings', authHandler, backfillHandler);
+
+// --- Browser Rendering Endpoints ---
+router.post('/browser/screenshot', authHandler, browserScreenshotHandler);
+router.post('/browser/extract', authHandler, browserExtractHandler);
+router.post('/browser/pdf', authHandler, browserPdfHandler);
 
 // Catch-all for 404s
 router.all('*', () => new Response('Not Found', { status: 404 }));

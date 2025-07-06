@@ -12,5 +12,8 @@
     "@cloudflare/workers-types": "^4.20250503.0",
     "itty-router": "^2.5.3",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.0.3"
   }
 }

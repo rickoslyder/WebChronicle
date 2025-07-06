@@ -1,8 +1,15 @@
 {
   "mcpServers": {
-    "playwright": {
+    "cloudflare-browser-rendering": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest"]
+      "args": ["-y", "@amotivv/cloudflare-browser-rendering-mcp"],
+      "env": {
+        "BROWSER_RENDERING_API": "https://activity-log-worker.rickoslyder.workers.dev/browser"
+      }
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "authorization_token": "Bearer YOUR_GITHUB_PAT_HERE"
     }
   }
 }

@@ -17,6 +17,7 @@ export const config = {
       'https://web-chronicle-ui.pages.dev',
       'https://activity-log-ui.pages.dev',
       'https://webchronicle-ui.pages.dev',
+      'https://web-chronicle-ui.rickoslyder.workers.dev',
       // Chrome extensions
       'chrome-extension://pfbcnhlgjefhmilogobgeadgkjpegedl',
     ],

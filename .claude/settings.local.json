@@ -63,7 +63,9 @@
       "Bash(./deploy.sh)",
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_network_requests",
-      "WebFetch(domain:web-chronicle-ui.pages.dev)"
+      "WebFetch(domain:web-chronicle-ui.pages.dev)",
+      "mcp__cloudflare-bindings__d1_database_query",
+      "mcp__playwright__browser_wait_for"
     ],
     "deny": []
   },

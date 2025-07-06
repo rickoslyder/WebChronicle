@@ -1,6 +1,7 @@
 name = "activity-log-worker"
 main = "./src/index.ts"
 compatibility_date = "2025-05-03"
+compatibility_flags = ["nodejs_compat"]
 
 [ai]
 binding = "AI"
@@ -29,3 +30,7 @@ head_sampling_rate = 1
 
 [observability.logs]
 enabled = true
+
+# Browser Rendering for capturing dynamic content and screenshots
+[browser]
+binding = "BROWSER"
