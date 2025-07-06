@@ -22,8 +22,16 @@ npm run build        # Build content scripts with esbuild
 npm install          # Install dependencies
 npm run dev          # Start local development server
 npm run build        # Build the worker
-npx wrangler deploy  # Deploy to Cloudflare
+npm run deploy       # Deploy using automated script (recommended)
+npx wrangler deploy  # Deploy manually
 npx wrangler tail    # View production logs
+```
+
+### Quick Deploy (from root directory)
+```bash
+npm run deploy:worker  # Deploy Cloudflare Worker
+npm run deploy:ui      # Info about UI deployment
+npm run deploy:all     # Deploy everything
 ```
 
 ## Architecture & Key Design Patterns
@@ -83,8 +91,46 @@ npm run dev
 - Semantic search via Vectorize integration
 - Offline sync with improved queue management
 - Popup interface (in development)
+- Enhanced UI with dark mode and modern design
+- AI-powered "Find Similar" feature
+- Analytics dashboard with Chart.js visualizations
+
+## Deployment
+
+### Worker Deployment
+The worker now has an automated deployment script that handles environment variables:
+```bash
+cd activity-log-worker
+npm run deploy  # Uses ./deploy.sh script
+```
+
+The script automatically:
+- Loads CLOUDFLARE_API_TOKEN from `.env.local`
+- Deploys to production with all bindings configured
+- Shows deployment URL and version ID
+
+### UI Deployment
+The Activity Log UI deploys automatically via GitHub push:
+- **Production URL**: https://web-chronicle-ui.pages.dev/
+- **Source**: `activity-log-ui/` directory in main branch
+- **Build**: No build step required (static files)
+- **Cache**: Controlled via `_headers` file
+
+To update the UI:
+1. Make changes to files in `activity-log-ui/`
+2. Commit and push to GitHub
+3. Cloudflare Pages automatically deploys within ~45 seconds
+
+### Environment Variables
+Set these in respective platforms:
+- **Worker**: Use `.env.local` file (not committed)
+- **UI (Cloudflare Pages)**: Set in dashboard
+  - `WORKER_URL`: Your worker URL
+  - `AUTH_TOKEN`: Authentication token
+- **UI (Local)**: Edit `config.js` directly
 
 ## Configuration Files
 - **Extension**: `manifest.json`, `lib/constants.js`
-- **Worker**: `wrangler.toml` (Cloudflare bindings), `tsconfig.json`
+- **Worker**: `wrangler.toml` (Cloudflare bindings), `tsconfig.json`, `.env.local`
 - **Database**: `schema.sql`, migration files
+- **UI**: `config.js` (generated from template), `_headers` (cache control)

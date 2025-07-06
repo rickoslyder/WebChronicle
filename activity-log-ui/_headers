@@ -1,0 +1,20 @@
+/*
+  Cache-Control: max-age=3600
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.css
+  Cache-Control: max-age=31536000, immutable
+
+/*.js
+  Cache-Control: max-age=31536000, immutable
+
+/config.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
