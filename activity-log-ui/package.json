@@ -1,9 +1,8 @@
 {
-  "name": "activity-log-ui",
+  "name": "web-chronicle-ui",
   "version": "2.0.0",
-  "description": "WebChronicle Activity Log UI - Static Site",
   "private": true,
-  "scripts": {
-    "build": "echo 'No build required - static files only'"
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0"
   }
 }

@@ -10,10 +10,10 @@
   ],
   "scripts": {
     "deploy:worker": "cd activity-log-worker && npm run deploy",
-    "deploy:ui": "echo 'UI is deployed automatically via GitHub push to Cloudflare Pages'",
+    "deploy:ui": "cd activity-log-ui && npx wrangler deploy",
     "deploy:all": "npm run deploy:worker && npm run deploy:ui",
     "dev:worker": "cd activity-log-worker && npm run dev",
-    "dev:ui": "cd activity-log-ui && open index.html",
+    "dev:ui": "cd activity-log-ui && npx wrangler dev",
     "build:extension": "cd personal-web-activity-chronicle-extension && npm run build"
   },
   "repository": {
