@@ -61,7 +61,9 @@
       "Bash(CLOUDFLARE_API_TOKEN=WxNcf42r_FwiQFYeg7qo3voXBfswMHD0b6uZ2rll npx wrangler deploy)",
       "Bash(chmod:*)",
       "Bash(./deploy.sh)",
-      "mcp__playwright__browser_console_messages"
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_network_requests",
+      "WebFetch(domain:web-chronicle-ui.pages.dev)"
     ],
     "deny": []
   },

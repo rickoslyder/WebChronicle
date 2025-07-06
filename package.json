@@ -5,6 +5,7 @@
   "private": true,
   "workspaces": [
     "activity-log-worker",
+    "activity-log-ui",
     "personal-web-activity-chronicle-extension"
   ],
   "scripts": {
