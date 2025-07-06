@@ -2,39 +2,299 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Web Chronicle Options</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Chronicle Settings</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <h1>Web Chronicle Options</h1>
-  <form id="options-form">
-    <label for="worker-url">Worker URL:</label>
-    <input type="text" id="worker-url" name="workerUrl" required>
+  <div class="container">
+    <header class="header">
+      <div class="header-content">
+        <h1>
+          <svg class="logo" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Web Chronicle
+        </h1>
+        <p class="subtitle">Personal Web Activity Tracker</p>
+      </div>
+    </header>
 
-    <label for="auth-token">Auth Token:</label>
-    <input type="password" id="auth-token" name="authToken" required>
+    <nav class="tabs">
+      <button class="tab-button active" data-tab="settings">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+          <path d="M10 4a6 6 0 016 6c0 1.657-.672 3.157-1.757 4.243A6 6 0 1110 4zm0-2a8 8 0 100 16 8 8 0 000-16z"/>
+        </svg>
+        Settings
+      </button>
+      <button class="tab-button" data-tab="search">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"/>
+          <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 110-12 6 6 0 010 12z"/>
+        </svg>
+        Search
+      </button>
+      <button class="tab-button" data-tab="stats">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+        </svg>
+        Statistics
+      </button>
+      <button class="tab-button" data-tab="about">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+        </svg>
+        About
+      </button>
+    </nav>
 
-    <label for="url-blacklist">URL Blacklist (one pattern per line):</label>
-    <textarea id="url-blacklist" name="urlBlacklist" rows="5"></textarea>
+    <main class="content">
+      <!-- Settings Tab -->
+      <div id="settings-tab" class="tab-content active">
+        <form id="options-form">
+          <!-- Connection Settings -->
+          <section class="card">
+            <h2 class="card-title">Connection Settings</h2>
+            <div class="form-group">
+              <label for="worker-url">
+                <span class="label-text">Worker URL</span>
+                <span class="label-hint">Your Cloudflare Worker endpoint</span>
+              </label>
+              <div class="input-wrapper">
+                <input type="url" id="worker-url" name="workerUrl" required placeholder="https://your-worker.workers.dev">
+                <span class="input-icon">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
 
-    <label for="min-duration">Minimum Duration (seconds):</label>
-    <input type="number" id="min-duration" name="minDurationSeconds" min="0" value="5">
+            <div class="form-group">
+              <label for="auth-token">
+                <span class="label-text">Authentication Token</span>
+                <span class="label-hint">Keep this secret and secure</span>
+              </label>
+              <div class="input-wrapper password-wrapper">
+                <input type="password" id="auth-token" name="authToken" required placeholder="••••••••••••••••">
+                <button type="button" class="toggle-password" aria-label="Toggle password visibility">
+                  <svg class="eye-open" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    <path d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                  <svg class="eye-closed" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="display: none;">
+                    <path d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-    <button type="submit" id="save-button">Save</button>
-    <button type="button" id="test-button">Test Connection</button>
-  </form>
-  <div id="status"></div>
+            <div class="form-actions">
+              <button type="button" id="test-button" class="button button-secondary">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 4a.5.5 0 01.5.5v3a.5.5 0 01-.5.5H5.5a.5.5 0 010-1H8V4.5A.5.5 0 018 4zM8 0a8 8 0 100 16A8 8 0 008 0zM1 8a7 7 0 1114 0A7 7 0 011 8z"/>
+                </svg>
+                Test Connection
+              </button>
+            </div>
+          </section>
 
-  <hr>
+          <!-- Tracking Settings -->
+          <section class="card">
+            <h2 class="card-title">Tracking Settings</h2>
+            
+            <div class="form-group">
+              <label for="min-duration">
+                <span class="label-text">Minimum Duration</span>
+                <span class="label-hint">Only track visits longer than this (seconds)</span>
+              </label>
+              <input type="number" id="min-duration" name="minDurationSeconds" min="0" value="5" class="input-number">
+            </div>
 
-  <h2>Search Activity Logs</h2>
-  <div>
-    <input type="text" id="search-query" placeholder="Enter search query..." style="width: 300px; margin-right: 10px;">
-    <button type="button" id="search-button">Search</button>
+            <div class="form-group">
+              <label for="periodic-scrape-interval">
+                <span class="label-text">Content Update Interval</span>
+                <span class="label-hint">How often to capture page content (minutes)</span>
+              </label>
+              <input type="number" id="periodic-scrape-interval" name="periodicScrapeIntervalMinutes" min="1" value="2" class="input-number">
+            </div>
+
+            <div class="form-group">
+              <label for="url-blacklist">
+                <span class="label-text">Excluded URLs</span>
+                <span class="label-hint">Patterns to exclude from tracking (one per line)</span>
+              </label>
+              <textarea id="url-blacklist" name="urlBlacklist" rows="5" placeholder="*://example.com/*&#10;*://localhost/*&#10;*://*.local/*"></textarea>
+              <button type="button" id="test-pattern" class="button button-small">Test Pattern</button>
+            </div>
+          </section>
+
+          <!-- Save Button -->
+          <div class="form-submit">
+            <button type="submit" id="save-button" class="button button-primary">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M2 1a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V2a1 1 0 00-1-1H9.5a1 1 0 00-1 1v7.293l2.646-2.647a.5.5 0 01.708.708l-3.5 3.5a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L7.5 9.293V2a2 2 0 012-2H14a2 2 0 012 2v12a2 2 0 01-2 2H2a2 2 0 01-2-2V2a2 2 0 012-2z"/>
+              </svg>
+              Save Settings
+            </button>
+          </div>
+        </form>
+
+        <!-- Quick Actions -->
+        <section class="card">
+          <h2 class="card-title">Quick Actions</h2>
+          <div class="quick-actions">
+            <button type="button" id="export-settings" class="button button-small">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8.5 1.5A1.5 1.5 0 0110 3v5h-1V3a.5.5 0 00-.5-.5h-3a.5.5 0 00-.5.5v5H4V3a1.5 1.5 0 011.5-1.5h3z"/>
+                <path d="M3.5 9a.5.5 0 01.5.5v4a.5.5 0 00.5.5h7a.5.5 0 00.5-.5v-4a.5.5 0 011 0v4A1.5 1.5 0 0111.5 15h-7A1.5 1.5 0 013 13.5v-4a.5.5 0 01.5-.5z"/>
+              </svg>
+              Export
+            </button>
+            <button type="button" id="import-settings" class="button button-small">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 10a.5.5 0 01-.5-.5v-5a.5.5 0 011 0v5a.5.5 0 01-.5.5z"/>
+                <path d="M10.854 7.146a.5.5 0 010 .708l-3 3a.5.5 0 01-.708 0l-3-3a.5.5 0 11.708-.708L7.5 9.793V3.5a.5.5 0 011 0v6.293l2.646-2.647a.5.5 0 01.708 0z"/>
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2zM9.5 3A1.5 1.5 0 0011 4.5h2V14a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1h5.5v2z"/>
+              </svg>
+              Import
+            </button>
+            <button type="button" id="pause-tracking" class="button button-small">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M5.5 3.5A1.5 1.5 0 017 5v6a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5zm5 0A1.5 1.5 0 0112 5v6a1.5 1.5 0 01-3 0V5a1.5 1.5 0 011.5-1.5z"/>
+              </svg>
+              Pause Tracking
+            </button>
+            <button type="button" id="clear-data" class="button button-small button-danger">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/>
+                <path d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 01-1-1V2a1 1 0 011-1H6a1 1 0 011-1h2a1 1 0 011 1h3.5a1 1 0 011 1v1zM4.118 4L4 4.059V13a1 1 0 001 1h6a1 1 0 001-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+              </svg>
+              Clear Data
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Search Tab -->
+      <div id="search-tab" class="tab-content">
+        <section class="card">
+          <h2 class="card-title">Search Activity Logs</h2>
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <input 
+                type="text" 
+                id="search-query" 
+                placeholder="Search your browsing history..." 
+                class="search-input"
+                autocomplete="off"
+              >
+              <button type="button" id="search-button" class="search-button">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="search-filters">
+              <button type="button" class="filter-button" id="toggle-filters">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M1.5 1.5A.5.5 0 012 1h12a.5.5 0 01.5.5v2a.5.5 0 01-.128.334L10 8.692V13.5a.5.5 0 01-.342.474l-3 1A.5.5 0 016 14.5V8.692L1.628 3.834A.5.5 0 011.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 017 8.5v5.306l2-.666V8.5a.5.5 0 01.128-.334L13.5 3.308V2h-11z"/>
+                </svg>
+                Filters
+              </button>
+            </div>
+          </div>
+          <div id="search-filters-panel" class="filters-panel" style="display: none;">
+            <div class="filter-group">
+              <label>Date Range</label>
+              <input type="date" id="filter-date-from" class="filter-input">
+              <span>to</span>
+              <input type="date" id="filter-date-to" class="filter-input">
+            </div>
+            <div class="filter-group">
+              <label>Domain</label>
+              <input type="text" id="filter-domain" placeholder="example.com" class="filter-input">
+            </div>
+          </div>
+          <div id="search-results" class="search-results">
+            <p class="search-hint">Enter a search query to find your saved activities</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Statistics Tab -->
+      <div id="stats-tab" class="tab-content">
+        <section class="card">
+          <h2 class="card-title">Activity Statistics</h2>
+          <div id="stats-container" class="stats-container">
+            <div class="stat-card">
+              <h3>Today</h3>
+              <div class="stat-value" id="stat-today-sites">-</div>
+              <div class="stat-label">Sites Visited</div>
+            </div>
+            <div class="stat-card">
+              <h3>Today</h3>
+              <div class="stat-value" id="stat-today-time">-</div>
+              <div class="stat-label">Time Spent</div>
+            </div>
+            <div class="stat-card">
+              <h3>This Week</h3>
+              <div class="stat-value" id="stat-week-sites">-</div>
+              <div class="stat-label">Sites Visited</div>
+            </div>
+            <div class="stat-card">
+              <h3>All Time</h3>
+              <div class="stat-value" id="stat-total-logs">-</div>
+              <div class="stat-label">Total Logs</div>
+            </div>
+          </div>
+          <div class="coming-soon">
+            <p>More detailed statistics coming soon!</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- About Tab -->
+      <div id="about-tab" class="tab-content">
+        <section class="card">
+          <h2 class="card-title">About Web Chronicle</h2>
+          <div class="about-content">
+            <p>Web Chronicle is a personal web activity tracking system that helps you understand your browsing habits while keeping your data private.</p>
+            
+            <h3>Features</h3>
+            <ul>
+              <li>📊 Track time spent on websites</li>
+              <li>📜 Monitor scroll depth and engagement</li>
+              <li>🔍 AI-powered content summarization</li>
+              <li>🔎 Semantic search across your history</li>
+              <li>🔒 Privacy-first: your data stays yours</li>
+              <li>☁️ Offline support with automatic sync</li>
+            </ul>
+
+            <h3>Privacy</h3>
+            <p>Your browsing data is sent only to your own Cloudflare Worker. No third-party tracking or analytics.</p>
+
+            <h3>Support</h3>
+            <p>For issues or feature requests, visit the <a href="https://github.com/your-repo/webchronicle" target="_blank">GitHub repository</a>.</p>
+
+            <div class="version-info">
+              <p>Version: <span id="version">0.1.0</span></p>
+              <p>Last updated: <span id="last-updated">-</span></p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Status/Notification Area -->
+    <div id="status" class="status" aria-live="polite"></div>
   </div>
-  <div id="search-results" style="margin-top: 15px;">
-    <!-- Search results will be displayed here -->
-  </div>
+
+  <!-- Hidden file input for import -->
+  <input type="file" id="import-file-input" accept=".json" style="display: none;">
 
   <script type="module" src="options.js"></script>
 </body>

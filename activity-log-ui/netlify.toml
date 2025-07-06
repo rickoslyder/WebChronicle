@@ -1,6 +1,11 @@
-# Minimal netlify.toml for Cloudflare Pages static deployment
+# Netlify configuration for Activity Log UI
 [build]
-  # No build command needed for static site
-  command = ""
-  # Directory containing the deploy-ready assets (index.html, etc.)
+  # Generate config.js from environment variables
+  command = "node build-config.js"
+  # Directory containing the deploy-ready assets
   publish = "."
+
+[build.environment]
+  # Set these in Netlify UI:
+  # WORKER_URL = "https://your-worker.workers.dev"
+  # AUTH_TOKEN = "your-auth-token"

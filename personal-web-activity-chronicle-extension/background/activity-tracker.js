@@ -1,9 +1,9 @@
-import { STORAGE_KEYS } from '../lib/constants.js';
+import { STORAGE_KEYS, DEFAULT_PERIODIC_SCRAPE_INTERVAL_MINUTES, IDLE_DETECTION_INTERVAL_SECONDS, IDLE_TIMEOUT_SECONDS } from '../lib/constants.js';
 import { sendActivityLog } from './cloudflare-client.js';
 
 // --- State ---
 let activeTabId = null;
-let activeTabInfo = null; // { url, title, startTimestamp }
+let activeTabInfo = null; // { url, title, startTimestamp, textContent, maxScrollPercent }
 let lastActivityTimestamp = Date.now();
 let isWindowFocused = true; // Assume focused initially
 
@@ -18,6 +18,11 @@ const DEFAULT_MIN_DURATION_SECONDS = 5; // Default minimum time
 // --- Functions ---
 
 async function handleTabEnd(endedTabId, endedTabInfo) {
+  // Clear any periodic scrape alarm for this tab
+  chrome.alarms.clear('periodic-scrape-' + endedTabId, (wasCleared) => {
+    if (wasCleared) console.log(`[Tracker] Cleared periodic scrape alarm for tab ${endedTabId}`);
+  });
+
   if (!endedTabInfo || !endedTabInfo.startTimestamp) return;
   // Ensure tabId is treated as a number for API calls
   const numericTabId = Number(endedTabId);
@@ -31,14 +36,22 @@ async function handleTabEnd(endedTabId, endedTabInfo) {
       STORAGE_KEYS.WORKER_URL,
       STORAGE_KEYS.AUTH_TOKEN,
       STORAGE_KEYS.URL_BLACKLIST,
-      STORAGE_KEYS.MIN_DURATION
+      STORAGE_KEYS.MIN_DURATION,
+      'trackingPaused'
     ]);
     const workerUrl = settings[STORAGE_KEYS.WORKER_URL];
     const authToken = settings[STORAGE_KEYS.AUTH_TOKEN];
     const urlBlacklist = settings[STORAGE_KEYS.URL_BLACKLIST] || DEFAULT_URL_BLACKLIST;
     const minDurationSeconds = settings[STORAGE_KEYS.MIN_DURATION] ?? DEFAULT_MIN_DURATION_SECONDS; // Use ?? for 0 case
+    const trackingPaused = settings.trackingPaused || false;
 
     // --- Filtering Checks ---
+    // Check 0: Tracking paused
+    if (trackingPaused) {
+      console.log(`[Tracker] Skipping log for tab ${endedTabId} - Tracking is paused.`);
+      return;
+    }
+
     // Check 1: Minimum duration
     if (timeSpentSeconds < minDurationSeconds) {
       console.log(`[Tracker] Skipping log for tab ${endedTabId} - Duration (${timeSpentSeconds}s) less than minimum (${minDurationSeconds}s).`);
@@ -59,108 +72,81 @@ async function handleTabEnd(endedTabId, endedTabInfo) {
 
     // Now safe to proceed with getting text and scroll data
     // 2a. Execute scraper script to trigger text extraction
-    let textContent = ''; // Initialize textContent
+    // This final scrape ensures we have the absolute latest data.
+    // The result will update activeTabInfo.textContent and activeTabInfo.maxScrollPercent.
+    // The payload sent will use these updated values.
     try {
-      console.log(`[Tracker] Executing scraper script in tab ${numericTabId} to trigger message sending.`);
+      console.log(`[Tracker] Executing final scraper script in tab ${numericTabId} to trigger message sending.`);
       // Promise to wait for the scraper result message
       const scraperResultPromise = new Promise((resolveScraperResult, rejectScraperResult) => {
         const listener = (message, sender, sendResponse) => {
           // Check if the message is from the correct tab and is the scraper result
           if (message.type === 'SCRAPER_RESULT' && sender.tab && sender.tab.id === numericTabId) {
-            const receivedText = message.textContent || '';
-            console.log(`[Tracker] Received SCRAPER_RESULT from tab ${numericTabId}. Length: ${receivedText.length}. Preparing to resolve promise with this text.`);
+            activeTabInfo.textContent = message.textContent || ''; // Update activeTabInfo
+            activeTabInfo.maxScrollPercent = message.maxScrollPercent || 0; // Update activeTabInfo
+            console.log(`[Tracker] Received FINAL SCRAPER_RESULT from tab ${numericTabId}. Length: ${activeTabInfo.textContent.length}, Scroll: ${activeTabInfo.maxScrollPercent}%. Preparing to resolve promise.`);
             chrome.runtime.onMessage.removeListener(listener); // Clean up listener
-            resolveScraperResult(receivedText); // Resolve with the text content
+            resolveScraperResult({ textContent: activeTabInfo.textContent, maxScrollPercent: activeTabInfo.maxScrollPercent });
             return false; // Indicate no further response from this listener
           }
           // Listen for SCRAPER_ERROR as well
           if (message.type === 'SCRAPER_ERROR' && sender.tab && sender.tab.id === numericTabId) {
-            console.warn(`[Tracker] Received SCRAPER_ERROR from tab ${numericTabId}:`, message.error);
+            console.warn(`[Tracker] Received FINAL SCRAPER_ERROR from tab ${numericTabId}:`, message.error);
             chrome.runtime.onMessage.removeListener(listener); // Clean up listener
-            resolveScraperResult(''); // Resolve with empty string on scraper error
+            // Resolve with current activeTabInfo content (might be from periodic scrape)
+            resolveScraperResult({ textContent: activeTabInfo.textContent, maxScrollPercent: activeTabInfo.maxScrollPercent }); 
             return false;
           }
           return false; // Important for other listeners
         };
         chrome.runtime.onMessage.addListener(listener);
 
-        // Timeout for waiting for the scraper message
+        // Send message to content script to start scraping
+        chrome.tabs.sendMessage(numericTabId, { type: 'REQUEST_SCRAPE_AND_SCROLL' })
+          .catch(err => {
+            console.warn(`[Tracker] Error sending REQUEST_SCRAPE_AND_SCROLL to tab ${numericTabId} (final scrape):`, err);
+            // If sendMessage fails (e.g., tab closed, no content script), resolve with existing data
+            chrome.runtime.onMessage.removeListener(listener);
+            resolveScraperResult({ textContent: activeTabInfo.textContent, maxScrollPercent: activeTabInfo.maxScrollPercent });
+          });
+
+        // Set a timeout for the scraper response
         setTimeout(() => {
-          chrome.runtime.onMessage.removeListener(listener); // Clean up listener on timeout
-          console.warn(`[Tracker] Timeout waiting for SCRAPER_RESULT or SCRAPER_ERROR from tab ${numericTabId}`);
-          // Resolve with empty string on timeout, so await scraperResultPromise doesn't throw an unhandled rejection
-          resolveScraperResult('');
-        }, 5000); // 5-second timeout (adjust as needed)
+          chrome.runtime.onMessage.removeListener(listener);
+          console.warn(`[Tracker] Timeout waiting for FINAL scraper result from tab ${numericTabId}. Using potentially stale data.`);
+          resolveScraperResult({ textContent: activeTabInfo.textContent, maxScrollPercent: activeTabInfo.maxScrollPercent });
+        }, 10000); // 10 seconds timeout
       });
 
-      // Execute the scraper script
-      const scriptResults = await chrome.scripting.executeScript({
-        target: { tabId: numericTabId },
-        files: ['dist/content.js'], // Execute the bundled scraper
-      });
+      // 2b. Await the scraper result
+      const scrapeData = await scraperResultPromise;
 
-      // Log the result of the script injection/execution attempt, but don't gate textContent on it.
-      if (!scriptResults || scriptResults.length === 0 || scriptResults[0].result === undefined) {
-        console.warn(`[Tracker] Scraper script injection may have failed or returned no definite result (undefined) for tab ${numericTabId}. Result:`, scriptResults);
-      } else if (scriptResults[0].result === null) {
-        console.warn(`[Tracker] Scraper script returned null (possibly due to premature page close) for tab ${numericTabId}.`);
-      } else if (scriptResults[0].result === false) {
-        console.warn(`[Tracker] Scraper script in tab ${numericTabId} explicitly returned false (indicated an internal error).`);
+      const logPayload = {
+        id: crypto.randomUUID(), // Generate a unique ID for this log entry for IDB
+        url: endedTabInfo.url,
+        title: endedTabInfo.title,
+        startTimestamp: endedTabInfo.startTimestamp,
+        endTimestamp,
+        timeSpentSeconds,
+        textContent: scrapeData.textContent, // Use data from activeTabInfo (updated by scrape)
+        maxScrollPercent: scrapeData.maxScrollPercent, // Use data from activeTabInfo
+        // contentHash will be calculated by cloudflare-client.js if textContent is present
+      };
+
+      // 4. Send payload to logHandler
+      console.log(`[Tracker] Sending log data for tab ${endedTabId}`);
+      const sendResult = await sendActivityLog(workerUrl, authToken, logPayload);
+
+      if (sendResult.success && !sendResult.storedOffline) {
+        console.log(`[Tracker] Successfully sent log data for tab ${endedTabId} to worker.`);
+      } else if (sendResult.success && sendResult.storedOffline) {
+        console.log(`[Tracker] Failed to send log data for tab ${endedTabId} to worker, but it was successfully stored offline. Message: ${sendResult.message}`);
       } else {
-        console.log(`[Tracker] Scraper script injection appears successful (returned ${scriptResults[0].result}) for tab ${numericTabId}.`);
+        console.error(`[Tracker] Failed to send log data for tab ${endedTabId} and failed to store offline:`, sendResult.error, sendResult.idbSaveError);
       }
 
-      // Primary way to get textContent is now via the message listener and scraperResultPromise
-      console.log(`[Tracker] Awaiting text content from SCRAPER_RESULT message for tab ${numericTabId}.`);
-      textContent = await scraperResultPromise;
-      console.log(`[Tracker] After awaiting scraperResultPromise for tab ${numericTabId}, final textContent length: ${textContent?.length ?? 0}.`);
-
-    } catch (err) {
-      console.error(`[Tracker] Error during scraper script execution or message handling for tab ${numericTabId}:`, err);
-      textContent = ''; // Default to empty on any overarching error
-    }
-
-    // 2b. Request scroll data from the other content script
-    let maxScrollPercent = 0;
-    try {
-      console.log(`[Tracker] Requesting scroll data from tab ${numericTabId}`);
-      const scrollResult = await chrome.tabs.sendMessage(numericTabId, { type: 'REQUEST_SCROLL_DATA' });
-      if (scrollResult && typeof scrollResult.maxScrollPercent === 'number') {
-        maxScrollPercent = scrollResult.maxScrollPercent;
-        console.log(`[Tracker] Received max scroll percent from tab ${numericTabId}: ${maxScrollPercent}%`);
-      } else {
-        console.warn(`[Tracker] Invalid or no scroll result received from tab ${numericTabId}. Result:`, scrollResult);
-      }
-    } catch (err) {
-      console.error(`[Tracker] Error requesting scroll data from tab ${numericTabId}:`, err);
-      // Proceed with 0 scroll if message fails
-    }
-
-    // 3. Construct payload
-    const logPayload = {
-      id: crypto.randomUUID(), // Generate unique ID for the log entry
-      url: endedTabInfo.url,
-      title: endedTabInfo.title,
-      startTimestamp: endedTabInfo.startTimestamp,
-      endTimestamp,
-      timeSpentSeconds,
-      maxScrollPercent: maxScrollPercent,
-      textContent: typeof textContent === 'string' ? textContent : '', // Ensure it's a string
-      processedAt: 0 // Placeholder, Worker will set this
-      // tagsJson will be added by the worker
-      // summaryR2Key will be added by the worker
-    };
-
-    // 4. Send payload to logHandler
-    console.log(`[Tracker] Sending log data for tab ${endedTabId}`);
-    const sendResult = await sendActivityLog(workerUrl, authToken, logPayload);
-
-    if (sendResult.success && !sendResult.storedOffline) {
-      console.log(`[Tracker] Successfully sent log data for tab ${endedTabId} to worker.`);
-    } else if (sendResult.success && sendResult.storedOffline) {
-      console.log(`[Tracker] Failed to send log data for tab ${endedTabId} to worker, but it was successfully stored offline. Message: ${sendResult.message}`);
-    } else {
-      console.error(`[Tracker] Failed to send log data for tab ${endedTabId} and failed to store offline:`, sendResult.error, sendResult.idbSaveError);
+    } catch (error) {
+      console.error(`[Tracker] Error during scraper script execution or message handling for tab ${numericTabId}:`, error);
     }
 
   } catch (error) {
@@ -181,6 +167,8 @@ async function handleTabStart(tabId) {
       url: tab.url,
       title: tab.title,
       startTimestamp: Date.now(),
+      textContent: '', // Initialize
+      maxScrollPercent: 0 // Initialize
     };
 
     // End the previous tab's session if there was one
@@ -193,6 +181,17 @@ async function handleTabStart(tabId) {
     activeTabInfo = newActiveTabInfo;
     lastActivityTimestamp = Date.now();
     console.log('[Tracker] Tab Start:', { tabId, info: activeTabInfo });
+
+    // Create a periodic scrape alarm for this tab
+    const settings = await chrome.storage.local.get(STORAGE_KEYS.PERIODIC_SCRAPE_INTERVAL_MINUTES);
+    const intervalMinutes = settings[STORAGE_KEYS.PERIODIC_SCRAPE_INTERVAL_MINUTES] || DEFAULT_PERIODIC_SCRAPE_INTERVAL_MINUTES;
+    
+    chrome.alarms.create('periodic-scrape-' + tabId, { 
+      delayInMinutes: intervalMinutes, // Initial delay before first scrape
+      periodInMinutes: intervalMinutes 
+    });
+    console.log(`[Tracker] Created periodic scrape alarm for tab ${tabId} with interval ${intervalMinutes} minutes.`);
+
   } catch (error) {
     // Tab might have been closed before we could get it
     console.warn(`[Tracker] Error getting tab ${tabId}:`, error);
@@ -202,6 +201,80 @@ async function handleTabStart(tabId) {
        activeTabInfo = null;
     }
   }
+}
+
+async function handlePeriodicScrapeAlarm(alarm) {
+  // Chrome passes an alarm object with a 'name' property
+  const alarmName = alarm.name;
+  if (!alarmName || !alarmName.startsWith('periodic-scrape-')) return;
+
+  const tabIdStr = alarmName.substring('periodic-scrape-'.length);
+  const tabId = parseInt(tabIdStr, 10);
+
+  if (isNaN(tabId) || !activeTabInfo || activeTabId !== tabId || !isWindowFocused) {
+    console.log(`[Tracker] Periodic scrape for tab ${tabId} skipped (inactive, not focused, or no longer tracked).`);
+    // Optionally clear the alarm if the tab is no longer truly active for scraping
+    // chrome.alarms.clear(alarmName);
+    return;
+  }
+
+  console.log(`[Tracker] Periodic scrape triggered for active tab ${tabId}`);
+  try {
+    // Re-use or adapt the scraping logic. We need to ensure this updates activeTabInfo.
+    // This is a simplified call; actual scraping logic is more complex in handleTabEnd.
+    // We need a way to request scrape and get results back to update activeTabInfo here.
+    // For now, let's assume a function requestAndUpdateScrapeData(tabId) exists.
+    await requestAndUpdateScrapeData(tabId);
+  } catch (error) {
+    console.error(`[Tracker] Error during periodic scrape for tab ${tabId}:`, error);
+  }
+}
+
+async function requestAndUpdateScrapeData(tabId) {
+  if (activeTabId !== tabId || !activeTabInfo) return;
+
+  console.log(`[Tracker] Requesting scrape data for tab ${tabId} (periodic update)`);
+  return new Promise(async (resolve, reject) => {
+    try {
+      const numericTabId = Number(tabId);
+      // This replicates part of handleTabEnd's scrape initiation.
+      // We need to listen for 'SCRAPER_RESULT' or 'SCRAPER_ERROR'
+      const scraperListener = (message, sender, sendResponse) => {
+        if (sender.tab && sender.tab.id === numericTabId) {
+          if (message.type === 'SCRAPER_RESULT') {
+            chrome.runtime.onMessage.removeListener(scraperListener);
+            activeTabInfo.textContent = message.textContent || '';
+            activeTabInfo.maxScrollPercent = message.maxScrollPercent || 0;
+            console.log(`[Tracker] Periodic scrape for tab ${tabId} updated activeTabInfo. Text length: ${activeTabInfo.textContent.length}, Scroll: ${activeTabInfo.maxScrollPercent}%`);
+            resolve();
+            return false;
+          } else if (message.type === 'SCRAPER_ERROR') {
+            chrome.runtime.onMessage.removeListener(scraperListener);
+            console.warn(`[Tracker] Periodic scrape error for tab ${tabId}:`, message.error);
+            resolve(); // Resolve anyway, don't let periodic update fail everything
+            return false;
+          }
+        }
+        return false;
+      };
+      chrome.runtime.onMessage.addListener(scraperListener);
+
+      // Send message to content script to start scraping
+      await chrome.tabs.sendMessage(numericTabId, { type: 'REQUEST_SCRAPE_AND_SCROLL' });
+      console.log(`[Tracker] Sent REQUEST_SCRAPE_AND_SCROLL to tab ${numericTabId} for periodic update.`);
+
+      // Timeout for scraper response
+      setTimeout(() => {
+        chrome.runtime.onMessage.removeListener(scraperListener);
+        console.warn(`[Tracker] Timeout waiting for periodic scrape result from tab ${tabId}`);
+        resolve(); // Resolve to not block, even if timeout
+      }, 10000); // 10 seconds timeout
+
+    } catch (error) {
+      console.error(`[Tracker] Error in requestAndUpdateScrapeData for tab ${tabId}:`, error);
+      reject(error); // This will be caught by handlePeriodicScrapeAlarm's catch
+    }
+  });
 }
 
 // --- Event Listeners ---
@@ -259,7 +332,66 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
   }
 });
 
-// TODO: Add listener for chrome.idle API if more precise inactivity detection is needed.
+// Alarm Listener
+chrome.alarms.onAlarm.addListener(handlePeriodicScrapeAlarm);
+
+// Chrome Idle API setup for better inactivity detection
+chrome.idle.setDetectionInterval(IDLE_DETECTION_INTERVAL_SECONDS);
+
+// Idle state change listener
+chrome.idle.onStateChanged.addListener(async (newState) => {
+    console.log(`[Tracker] Idle state changed to: ${newState}`);
+    
+    if (newState === 'active') {
+        // User is active again
+        lastActivityTimestamp = Date.now();
+        
+        // If we had a tab that was being tracked before idle, the normal
+        // focus/activation flow will handle resuming it
+        
+    } else if (newState === 'idle' || newState === 'locked') {
+        // User is idle or locked the screen
+        console.log(`[Tracker] User is ${newState}. Ending active session if any.`);
+        
+        if (activeTabId && activeTabInfo) {
+            // End the current active session
+            await handleTabEnd(activeTabId, activeTabInfo);
+            // Note: We keep activeTabId and activeTabInfo so we can potentially resume
+            // when the user becomes active again
+        }
+    }
+});
+
+// Query initial idle state
+chrome.idle.queryState(IDLE_TIMEOUT_SECONDS, (state) => {
+    console.log(`[Tracker] Initial idle state: ${state}`);
+    if (state === 'idle' || state === 'locked') {
+        // If starting in idle state, ensure we're not tracking
+        isWindowFocused = false;
+    }
+});
+
+// Export function for graceful shutdown
+export async function gracefulShutdown() {
+    console.log('[Tracker] Performing graceful shutdown...');
+    
+    // End any active tab session
+    if (activeTabId && activeTabInfo) {
+        await handleTabEnd(activeTabId, activeTabInfo);
+    }
+    
+    // Clear all periodic scrape alarms
+    const alarms = await chrome.alarms.getAll();
+    for (const alarm of alarms) {
+        if (alarm.name.startsWith('periodic-scrape-')) {
+            await chrome.alarms.clear(alarm.name);
+            console.log(`[Tracker] Cleared alarm: ${alarm.name}`);
+        }
+    }
+}
+
 // TODO: Add listener for chrome.runtime.onSuspend to handle extension shutdown.
 
-console.log('Activity tracker initialized');
+console.log('Activity tracker initialized with Chrome Idle API');
+
+export { handlePeriodicScrapeAlarm }; 

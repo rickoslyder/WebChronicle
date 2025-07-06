@@ -1,0 +1,1 @@
+This folder contains the built output assets for the worker "activity-log-worker" generated at 2025-07-06T03:15:37.867Z.

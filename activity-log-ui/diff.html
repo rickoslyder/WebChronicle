@@ -12,22 +12,53 @@
 <body>
     <header>
         <h1>Content Comparison</h1>
-        <p><a href="index.html">Back to Logs</a></p>
     </header>
     <main>
+        <div class="breadcrumb">
+            <a href="index.html">← Back to Activity Logs</a>
+        </div>
+        
         <div id="comparison-container">
             <h2 id="loading-message">Loading content and comparing...</h2>
+            
+            <!-- Metadata comparison section -->
+            <div id="metadata-comparison" class="metadata-comparison" style="display: none;">
+                <h3>Log Information</h3>
+                <div class="metadata-grid">
+                    <div class="metadata-column">
+                        <h4>First Log</h4>
+                        <div id="metadata-1"></div>
+                    </div>
+                    <div class="metadata-column">
+                        <h4>Second Log</h4>
+                        <div id="metadata-2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- View toggle controls -->
+            <div class="view-controls" style="display: none;">
+                <button class="view-toggle active" data-view="diff">Diff View</button>
+                <button class="view-toggle" data-view="side-by-side">Side by Side</button>
+            </div>
+            
+            <!-- Diff output -->
             <div id="diff-output" class="diff-output-container"></div>
             
-            <!-- Optional: Display original content -->
-            <div class="original-content-container" style="display: none;"> 
-                <h3>Original Content 1</h3>
-                <pre id="original-content-1"></pre>
-                <h3>Original Content 2</h3>
-                <pre id="original-content-2"></pre>
+            <!-- Side by side view -->
+            <div id="side-by-side" class="side-by-side-container" style="display: none;">
+                <div class="content-panel">
+                    <div class="content-panel-header">First Version</div>
+                    <div class="content-panel-body" id="content-1"></div>
+                </div>
+                <div class="content-panel">
+                    <div class="content-panel-header">Second Version</div>
+                    <div class="content-panel-body" id="content-2"></div>
+                </div>
             </div>
         </div>
     </main>
+    <script src="config.js"></script>
     <script src="diff.js"></script>
 </body>
 </html>

@@ -11,7 +11,8 @@
     "scripting",
     "unlimitedStorage",
     "notifications",
-    "downloads"
+    "downloads",
+    "idle"
   ],
   "action": {
     "default_popup": "popup/popup.html",

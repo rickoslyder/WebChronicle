@@ -7,23 +7,36 @@ import { getContentHandler } from './get-content-handler';
 import { searchHandler } from './search-handler'; // Import the new search handler
 import { backfillHandler } from './backfill-handler'; // Import the backfill handler
 import { Env } from './types';
+import { config } from './config';
 
 // Create a new Router
 const router = Router();
 
 // Helper function to add CORS headers
-function addCorsHeaders(response: Response): Response {
-  // Allow requests from any origin for now - restrict this later!
-  // TODO: Restrict to deployed Pages URL and localhost
-  response.headers.set('Access-Control-Allow-Origin', '*');
+function addCorsHeaders(response: Response, request: Request): Response {
+  const origin = request.headers.get('Origin');
+  
+  // Check if the origin is allowed
+  if (origin && config.cors.allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+  } else if (!origin && config.cors.allowNoOrigin) {
+    // Allow requests with no origin (e.g., from extensions or direct API calls)
+    response.headers.set('Access-Control-Allow-Origin', '*');
+  }
+  
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Auth-Token');
+  
+  if (config.cors.allowCredentials) {
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+  
   return response;
 }
 
 // Handle CORS preflight requests
-router.options('*', () => {
-  return addCorsHeaders(new Response(null, { status: 204 }));
+router.options('*', (request) => {
+  return addCorsHeaders(new Response(null, { status: 204 }), request);
 });
 
 /*
@@ -65,11 +78,11 @@ export default {
     try {
       const response = await router.handle(request, env);
       // Add CORS headers to actual responses
-      return addCorsHeaders(response);
+      return addCorsHeaders(response, request);
     } catch (error) {
       console.error('Unhandled error:', error);
       const errorResponse = new Response('Internal Server Error', { status: 500 });
-      return addCorsHeaders(errorResponse);
+      return addCorsHeaders(errorResponse, request);
     }
   },
 };

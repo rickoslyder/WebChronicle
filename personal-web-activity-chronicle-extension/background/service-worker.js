@@ -1,5 +1,6 @@
 import './activity-tracker.js';
-import { pingServer, sendActivityLog } from './cloudflare-client.js';
+import { gracefulShutdown } from './activity-tracker.js';
+import { pingServer, attemptToSendLog } from './cloudflare-client.js';
 import { loadSettings } from './settings-manager.js';
 import { getUnsyncedLogs, deleteLog } from '../lib/idb-manager.js';
 import { SYNC_ALARM_NAME, SYNC_INTERVAL_MINUTES, STORAGE_KEYS } from '../lib/constants.js';
@@ -41,17 +42,17 @@ async function syncOfflineLogs() {
   for (const log of logs) {
     console.log(`[Service Worker] Syncing log ID: ${log.id}`);
     try {
-      const result = await sendActivityLog(workerUrl, authToken, log);
-      // If the log was successfully sent to the server (not just re-saved offline by sendActivityLog itself)
-      if (result.success && (result.storedOffline === false || result.storedOffline === undefined) ) {
-        console.log(`[Service Worker] Log ID: ${log.id} synced successfully. Deleting from IDB.`);
+      // Use attemptToSendLog which only tries to send, doesn't re-queue on its own.
+      // The syncOfflineLogs itself is the retry mechanism (via alarms/online events).
+      const result = await attemptToSendLog(workerUrl, authToken, log);
+      
+      if (result.success) {
+        console.log(`[Service Worker] Log ID: ${log.id} synced successfully using attemptToSendLog. Deleting from IDB.`);
         await deleteLog(log.id);
-      } else if (result.success && result.storedOffline === true) {
-        // This case means sendActivityLog itself decided to re-queue it (e.g. was online but fetch failed and it re-saved)
-        // So we don't delete it from IDB yet.
-        console.log(`[Service Worker] Log ID: ${log.id} was re-queued by sendActivityLog. Will retry later.`);
+        lastSyncTime = Date.now();
       } else {
-        console.warn(`[Service Worker] Failed to sync log ID: ${log.id}. Error: ${result.error}. Will retry later.`);
+        console.warn(`[Service Worker] attemptToSendLog failed for log ID: ${log.id}. Error: ${result.error}, Status: ${result.status}. Will retry later.`);
+        // Log remains in IDB for the next sync attempt.
       }
     } catch (error) {
       console.error(`[Service Worker] Error syncing log ID: ${log.id}:`, error);
@@ -108,6 +109,9 @@ self.addEventListener('online', () => {
   syncOfflineLogs();
 });
 
+// Track last sync time
+let lastSyncTime = null;
+
 // --- Existing Message Listener --- //
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'PING_REQUEST') {
@@ -121,11 +125,112 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
-
-  if (message.type === 'SCRAPE_RESULT') {
-    console.log('[Service Worker] Received SCRAPE_RESULT:', message.textContent.length, message.maxScrollPercent);
-    // Process scrape result later
+  
+  // Handle sync status request from popup
+  if (message.type === 'GET_SYNC_STATUS') {
+    (async () => {
+      try {
+        // Get queue count
+        const unsyncedLogs = await getUnsyncedLogs();
+        const queueCount = unsyncedLogs.length;
+        
+        // Get today's stats
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayStats = await getTodayStats(todayStart.getTime());
+        
+        sendResponse({
+          isOnline: navigator.onLine,
+          queueCount: queueCount,
+          lastSyncTime: lastSyncTime,
+          todayStats: todayStats
+        });
+      } catch (error) {
+        console.error('[Service Worker] Error getting sync status:', error);
+        sendResponse({
+          isOnline: navigator.onLine,
+          queueCount: 0,
+          lastSyncTime: lastSyncTime,
+          error: error.message
+        });
+      }
+    })();
+    return true;
   }
+  
+  // Handle tracking status check
+  if (message.type === 'IS_TRACKING_TAB') {
+    (async () => {
+      try {
+        const settings = await loadSettings([STORAGE_KEYS.URL_BLACKLIST]);
+        const blacklist = settings[STORAGE_KEYS.URL_BLACKLIST] || [];
+        
+        // Get tab info
+        const tab = await chrome.tabs.get(message.tabId);
+        
+        // Check if URL is blacklisted
+        const isBlacklisted = blacklist.some(pattern => {
+          try {
+            const regex = new RegExp(pattern.replace('*', '.*'));
+            return regex.test(tab.url);
+          } catch (e) {
+            return tab.url.includes(pattern);
+          }
+        });
+        
+        if (isBlacklisted) {
+          sendResponse({ isTracking: false, reason: 'Site is blacklisted' });
+        } else if (!tab.url.startsWith('http://') && !tab.url.startsWith('https://')) {
+          sendResponse({ isTracking: false, reason: 'Not a web page' });
+        } else {
+          sendResponse({ isTracking: true });
+        }
+      } catch (error) {
+        console.error('[Service Worker] Error checking tracking status:', error);
+        sendResponse({ isTracking: false, reason: 'Error checking status' });
+      }
+    })();
+    return true;
+  }
+
+  // SCRAPE_RESULT is now handled directly by activity-tracker.js for its specific requests.
+  // if (message.type === 'SCRAPE_RESULT') {
+  //   console.log('[Service Worker] Received SCRAPE_RESULT:', message.textContent.length, message.maxScrollPercent);
+  //   // Process scrape result later
+  // }
 });
 
-// Future listeners for chrome.alarms, etc., will be added here by feature implementations.
+// Helper function to get today's stats
+async function getTodayStats(startOfDay) {
+  try {
+    // This is a simplified version - you might want to implement proper stats tracking
+    const logs = await getUnsyncedLogs();
+    const todayLogs = logs.filter(log => log.startTimestamp >= startOfDay);
+    
+    const uniqueSites = new Set(todayLogs.map(log => new URL(log.url).hostname));
+    const totalTime = todayLogs.reduce((sum, log) => sum + (log.timeSpentSeconds || 0), 0);
+    
+    return {
+      sitesVisited: uniqueSites.size,
+      totalTime: totalTime
+    };
+  } catch (error) {
+    console.error('[Service Worker] Error calculating today stats:', error);
+    return { sitesVisited: 0, totalTime: 0 };
+  }
+}
+
+// Chrome runtime onSuspend handler for graceful shutdown
+chrome.runtime.onSuspend.addListener(() => {
+  console.log('[Service Worker] Extension is being suspended/unloaded');
+  
+  // Perform graceful shutdown
+  gracefulShutdown().then(() => {
+    console.log('[Service Worker] Graceful shutdown completed');
+  }).catch(error => {
+    console.error('[Service Worker] Error during graceful shutdown:', error);
+  });
+  
+  // Note: Chrome gives us limited time in onSuspend, so we should complete quickly
+  // The gracefulShutdown function should be designed to complete within a few seconds
+});

@@ -30,9 +30,15 @@ export async function logHandler(request: Request, env: Env) {
     console.log('[Log Handler] Received Data:', JSON.stringify(receivedData).slice(0, 200) + '...'); // Log truncated
 
     // Validate required fields from extension
-    if (!receivedData.url || !receivedData.startTimestamp || !receivedData.textContent) {
-      console.error('[Log Handler] Bad Request - Missing required fields');
-      return new Response('Bad Request', { status: 400 });
+    const missingFields = [];
+    if (!receivedData.url) missingFields.push('url');
+    if (!receivedData.startTimestamp) missingFields.push('startTimestamp');
+    if (!receivedData.textContent) missingFields.push('textContent');
+    
+    if (missingFields.length > 0) {
+      console.error('[Log Handler] Bad Request - Missing required fields:', missingFields);
+      console.error('[Log Handler] Received fields:', Object.keys(receivedData));
+      return new Response(`Bad Request: Missing required fields: ${missingFields.join(', ')}`, { status: 400 });
     }
 
     // Add server-side generated fields

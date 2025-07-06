@@ -34,29 +34,13 @@ async function calculateHash(text) {
 }
 // --- End Hashing Utilities ---
 
-// Renamed function, no longer exported directly
-async function attemptToSendLog(workerUrl, authToken, logPayload) {
+// Now exported for service worker sync process
+export async function attemptToSendLog(workerUrl, authToken, logPayload) {
   const logUrl = `${workerUrl.replace(/\/+$/, '')}/log`;
-  console.log('[Client] Attempting to send log data to:', logUrl);
+  console.log('[Client] Attempting to send log data (via attemptToSendLog) to:', logUrl);
 
-  // Calculate content hash if textContent is present
-  // This check should ideally happen before calling attemptToSendLog,
-  // ensuring logPayload consistently has contentHash if textContent was present.
-  // For now, keeping it here to match original structure of sendLogData.
-  if (logPayload.textContent && !logPayload.contentHash) { // Added check for existing contentHash
-    try {
-      logPayload.contentHash = await calculateHash(logPayload.textContent);
-      console.log('[Client] Added contentHash:', logPayload.contentHash);
-    } catch (hashError) {
-      console.error('[Client] Failed to calculate content hash:', hashError);
-    }
-  } else if (!logPayload.textContent) {
-    console.warn('[Client] logPayload is missing textContent, cannot calculate hash.');
-  } else if (logPayload.contentHash) {
-    console.log('[Client] contentHash already present in logPayload:', logPayload.contentHash);
-  }
-
-  console.log('[Client] Log Payload being sent:', logPayload);
+  // contentHash is now expected to be pre-calculated and present in logPayload if textContent existed.
+  console.log('[Client] Log Payload being sent (via attemptToSendLog):', logPayload);
   try {
     const response = await fetch(logUrl, {
       method: 'POST',
@@ -82,16 +66,15 @@ async function attemptToSendLog(workerUrl, authToken, logPayload) {
 export async function sendActivityLog(workerUrl, authToken, logPayload) {
   console.log(`[Client] sendActivityLog called for log ID: ${logPayload.id}. Online: ${navigator.onLine}`);
 
-  // Ensure contentHash is calculated if textContent is present and hash isn't already there.
-  // This belongs here or in activity-tracker before calling sendActivityLog.
-  // To keep attemptToSendLog focused, let's ensure it's done before attempting to send.
+  // This ensures contentHash is calculated before either attempting to send or saving to IDB.
   if (logPayload.textContent && !logPayload.contentHash) {
     try {
       logPayload.contentHash = await calculateHash(logPayload.textContent);
-      console.log('[Client] Calculated contentHash for sendActivityLog:', logPayload.contentHash);
+      console.log('[Client] Calculated contentHash in sendActivityLog:', logPayload.contentHash);
     } catch (hashError) {
       console.error('[Client] Failed to calculate content hash in sendActivityLog:', hashError);
-      // Potentially return error or send without, depending on desired strictness
+      // Decide if we should proceed without hash or return an error.
+      // For now, we'll proceed, but the worker might reject or handle differently.
     }
   }
 
@@ -106,7 +89,7 @@ export async function sendActivityLog(workerUrl, authToken, logPayload) {
     }
   }
 
-  // If online, attempt to send
+  // If online, attempt to send using the direct send function
   const result = await attemptToSendLog(workerUrl, authToken, logPayload);
 
   if (!result.success) {

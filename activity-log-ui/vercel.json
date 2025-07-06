@@ -1,0 +1,10 @@
+{
+  "buildCommand": "node build-config.js",
+  "outputDirectory": ".",
+  "framework": null,
+  "rewrites": [],
+  "env": {
+    "WORKER_URL": "@worker-url",
+    "AUTH_TOKEN": "@auth-token"
+  }
+}
