@@ -11,9 +11,9 @@ if [ ! -f .env.local ]; then
     exit 1
 fi
 
-# Build the application
-echo "📦 Building Next.js application..."
-npm run build
+# Build the application for Cloudflare Pages
+echo "📦 Building Next.js application for Cloudflare Pages..."
+npx @cloudflare/next-on-pages
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed!"
@@ -22,7 +22,7 @@ fi
 
 # Deploy to Cloudflare Pages
 echo "☁️  Deploying to Cloudflare Pages..."
-npx wrangler pages deploy out \
+npx wrangler pages deploy .vercel/output/static \
     --project-name=web-chronicle-ui \
     --branch=main
 

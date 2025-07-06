@@ -30,6 +30,7 @@
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-force-graph-2d": "^1.28.0",
     "react-heatmap-grid": "^0.9.1",
     "react-intersection-observer": "^9.16.0",
     "recharts": "^3.0.2",
@@ -38,6 +39,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.12",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

@@ -21,6 +21,10 @@ import { cn } from '@/lib/utils'
 import { ActivityHeatmap } from './analytics/activity-heatmap'
 import { HourlyHeatmap } from './analytics/hourly-heatmap'
 import { ReadingMetrics } from './analytics/reading-metrics'
+import { DomainNetwork } from './analytics/domain-network'
+import { ProductivityScore } from './analytics/productivity-score'
+import { WeeklyReport } from './analytics/weekly-report'
+import { ActivityLogWithTags } from '@/types'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
@@ -33,6 +37,12 @@ export function AnalyticsDashboard() {
 
   const isLoading = analyticsLoading || domainsLoading || tagsLoading || activitiesLoading
   const allActivities = activitiesData?.pages.flatMap(page => page.data) || []
+  
+  // Transform activities to ensure they have tags array
+  const activitiesWithTags: ActivityLogWithTags[] = allActivities.map(activity => ({
+    ...activity,
+    tags: activity.tags || []
+  }))
 
   if (isLoading) {
     return (
@@ -110,22 +120,42 @@ export function AnalyticsDashboard() {
       {/* Heatmaps */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-card border rounded-lg p-6">
-          <ActivityHeatmap activities={allActivities} weeks={12} />
+          <ActivityHeatmap activities={activitiesWithTags} weeks={12} />
         </div>
         <div className="bg-card border rounded-lg p-6">
-          <HourlyHeatmap activities={allActivities} />
+          <HourlyHeatmap activities={activitiesWithTags} />
         </div>
       </div>
 
       {/* Reading Metrics */}
       <div className="bg-card border rounded-lg p-6 mb-8">
-        <ReadingMetrics activities={allActivities} />
+        <ReadingMetrics activities={activitiesWithTags} />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Activity Trend */}
+      {/* Domain Network */}
+      <div className="bg-card border rounded-lg p-6 mb-8">
+        <DomainNetwork 
+          activities={activitiesWithTags}
+          onDomainClick={(domain) => {
+            // You could add navigation or filtering here
+            console.log('Domain clicked:', domain)
+          }}
+        />
+      </div>
+
+      {/* Weekly Report */}
+      <div className="bg-card border rounded-lg p-6 mb-8">
+        <WeeklyReport activities={activitiesWithTags} weeks={4} />
+      </div>
+
+      {/* Productivity Score */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-card border rounded-lg p-6">
+          <ProductivityScore activities={activitiesWithTags} days={timeRange} />
+        </div>
+        
+        {/* Daily Activity Trend */}
+        <div className="lg:col-span-2 bg-card border rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Daily Activity Trend
@@ -159,7 +189,10 @@ export function AnalyticsDashboard() {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
 
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Hourly Distribution */}
         <div className="bg-card border rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
