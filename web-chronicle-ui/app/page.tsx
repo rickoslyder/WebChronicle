@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { Timeline } from '@/components/timeline'
-import { Navigation } from '@/components/navigation'
+import { AppLayout } from '@/components/app-layout'
 import { api } from '@/lib/api'
 import { QUERY_KEYS } from '@/lib/constants'
 
@@ -21,8 +21,7 @@ export default async function HomePage() {
   })
 
   return (
-    <>
-      <Navigation />
+    <AppLayout>
       <main className="container mx-auto px-4 py-8">
         <HydrationBoundary state={dehydrate(queryClient)}>
           <Suspense fallback={<TimelineSkeleton />}>
@@ -30,7 +29,7 @@ export default async function HomePage() {
           </Suspense>
         </HydrationBoundary>
       </main>
-    </>
+    </AppLayout>
   )
 }
 

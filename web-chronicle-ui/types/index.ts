@@ -51,6 +51,7 @@ export interface Settings {
   authToken: string
   autoRefresh: boolean
   showSummaries: boolean
+  showScreenshots: boolean
   defaultView: 'timeline' | 'analytics' | 'search' | 'insights'
   theme: 'light' | 'dark' | 'system'
 }

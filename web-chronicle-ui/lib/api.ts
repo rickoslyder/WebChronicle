@@ -100,6 +100,13 @@ class ApiClient {
     return this.fetcher<{ content: string }>(`/log-content/${id}`)
   }
 
+  async findSimilar(logId: string, limit: number = 10): Promise<SearchResult[]> {
+    const res = await this.fetcher<{
+      results: SearchResult[]
+    }>(`/logs/${logId}/similar?limit=${limit}`)
+    return res.results
+  }
+
   // Search
   async search(query: string, limit: number = 20): Promise<SearchResult[]> {
     const response = await this.fetcher<{

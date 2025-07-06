@@ -1,16 +1,37 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { Filter as FilterIcon, Loader2 } from 'lucide-react'
+import { Filter as FilterIcon, Loader2, CheckSquare, GitCompare } from 'lucide-react'
 import { useActivities } from '@/hooks/use-activities'
 import { ActivityCard } from '@/components/activity-card'
 import { FilterBar } from '@/components/filter-bar'
 import { parseActivityTags, groupByDate } from '@/lib/utils'
 import { useActivityStore } from '@/providers/activity-store-provider'
+import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
 
 export function Timeline() {
-  const viewMode = useActivityStore((state) => state.viewMode)
+  const [mounted, setMounted] = useState(false)
+  const router = useRouter()
+  const { 
+    viewMode, 
+    isSelectionMode, 
+    selectedActivityIds, 
+    toggleSelectionMode,
+    clearSelection 
+  } = useActivityStore((state) => ({
+    viewMode: state.viewMode,
+    isSelectionMode: state.isSelectionMode,
+    selectedActivityIds: state.selectedActivityIds,
+    toggleSelectionMode: state.toggleSelectionMode,
+    clearSelection: state.clearSelection,
+  }))
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
   const {
     data,
     fetchNextPage,
@@ -40,6 +61,13 @@ export function Timeline() {
     window.addEventListener('refetch-activities', handleRefetch)
     return () => window.removeEventListener('refetch-activities', handleRefetch)
   }, [refetch])
+
+  const handleCompare = () => {
+    if (selectedActivityIds.size === 2) {
+      const [id1, id2] = Array.from(selectedActivityIds)
+      router.push(`/compare?id1=${id1}&id2=${id2}`)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -82,7 +110,47 @@ export function Timeline() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Your Activity Timeline</h1>
-        <FilterBar />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleSelectionMode}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+              isSelectionMode
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-accent hover:text-accent-foreground"
+            )}
+          >
+            <CheckSquare className="h-4 w-4" />
+            <span>{isSelectionMode ? 'Cancel' : 'Select'}</span>
+          </button>
+          
+          {mounted && isSelectionMode && selectedActivityIds.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {selectedActivityIds.size} selected
+              </span>
+              
+              {selectedActivityIds.size === 2 && (
+                <button
+                  onClick={handleCompare}
+                  className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                >
+                  <GitCompare className="h-4 w-4" />
+                  Compare
+                </button>
+              )}
+              
+              <button
+                onClick={clearSelection}
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            </>
+          )}
+          
+          <FilterBar />
+        </div>
       </div>
 
       {viewMode === 'timeline' && (

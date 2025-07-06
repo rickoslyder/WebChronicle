@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { SettingsView } from '@/components/settings-view'
+import { AppLayout } from '@/components/app-layout'
 
 export const metadata: Metadata = {
   title: 'Settings | WebChronicle',
@@ -8,8 +9,10 @@ export const metadata: Metadata = {
 
 export default function SettingsPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <SettingsView />
-    </div>
+    <AppLayout>
+      <div className="container mx-auto px-4 py-8">
+        <SettingsView />
+      </div>
+    </AppLayout>
   )
 }

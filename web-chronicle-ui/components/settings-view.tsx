@@ -10,15 +10,22 @@ import {
   AlertCircle,
   Moon,
   Sun,
-  Monitor
+  Monitor,
+  Database,
+  FileJson,
+  FileSpreadsheet
 } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settings-store'
 import { cn } from '@/lib/utils'
+import { api } from '@/lib/api'
+import { ActivityLog } from '@/types'
 
 export function SettingsView() {
   const { settings, updateSettings, resetSettings, exportSettings, importSettings } = useSettingsStore()
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [importError, setImportError] = useState<string>('')
+  const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle')
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json')
 
   const handleSave = async () => {
     setSaveStatus('saving')
@@ -59,6 +66,70 @@ export function SettingsView() {
       }
     }
     reader.readAsText(file)
+  }
+
+  const exportActivitiesToJSON = (activities: ActivityLog[]) => {
+    const dataStr = JSON.stringify(activities, null, 2)
+    const blob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `webchronicle-activities-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportActivitiesToCSV = (activities: ActivityLog[]) => {
+    // CSV header
+    const headers = ['ID', 'Title', 'URL', 'Domain', 'Visited At', 'Time Spent (s)', 'Scroll Depth (%)', 'Content Length', 'Tags']
+    
+    // Convert activities to CSV rows
+    const rows = activities.map(activity => {
+      const tags = activity.tagsJson ? JSON.parse(activity.tagsJson).join('; ') : ''
+      return [
+        activity.id,
+        `"${activity.title.replace(/"/g, '""')}"`,
+        `"${activity.url}"`,
+        activity.domain,
+        new Date(activity.visitedAt).toISOString(),
+        activity.timeOnPage,
+        Math.round(activity.scrollDepth * 100),
+        activity.contentLength,
+        `"${tags}"`
+      ].join(',')
+    })
+    
+    const csv = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `webchronicle-activities-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleDataExport = async () => {
+    setExportStatus('exporting')
+    
+    try {
+      // Fetch all activities (increase limit to get more data)
+      const response = await api.getActivities({ limit: 1000 })
+      const activities = response.data
+      
+      if (exportFormat === 'json') {
+        exportActivitiesToJSON(activities)
+      } else {
+        exportActivitiesToCSV(activities)
+      }
+      
+      setExportStatus('success')
+      setTimeout(() => setExportStatus('idle'), 2000)
+    } catch (error) {
+      console.error('Export failed:', error)
+      setExportStatus('error')
+      setTimeout(() => setExportStatus('idle'), 3000)
+    }
   }
 
   const themes = [
@@ -195,6 +266,31 @@ export function SettingsView() {
                 />
               </button>
             </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium">
+                  Show Screenshot Previews
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Display screenshot preview on hover for activities
+                </p>
+              </div>
+              <button
+                onClick={() => updateSettings({ showScreenshots: !settings.showScreenshots })}
+                className={cn(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                  settings.showScreenshots ? "bg-primary" : "bg-input"
+                )}
+              >
+                <span
+                  className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-background transition-transform",
+                    settings.showScreenshots ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
           </div>
         </section>
 
@@ -229,6 +325,84 @@ export function SettingsView() {
                 {importError}
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Data Export */}
+        <section className="bg-card border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Export Activity Data</h2>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Export your activity history data for backup or analysis purposes.
+            </p>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Export Format
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setExportFormat('json')}
+                  className={cn(
+                    "flex items-center justify-center gap-2 px-4 py-2 rounded-md border transition-colors",
+                    exportFormat === 'json'
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <FileJson className="h-4 w-4" />
+                  <span>JSON</span>
+                </button>
+                <button
+                  onClick={() => setExportFormat('csv')}
+                  className={cn(
+                    "flex items-center justify-center gap-2 px-4 py-2 rounded-md border transition-colors",
+                    exportFormat === 'csv'
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>CSV</span>
+                </button>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleDataExport}
+              disabled={exportStatus === 'exporting'}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md transition-colors w-full justify-center",
+                exportStatus === 'exporting' && "opacity-50 cursor-not-allowed",
+                exportStatus === 'success' 
+                  ? "bg-green-600 text-white" 
+                  : exportStatus === 'error'
+                  ? "bg-destructive text-destructive-foreground"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
+            >
+              {exportStatus === 'exporting' ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Exporting...
+                </>
+              ) : exportStatus === 'success' ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Exported Successfully
+                </>
+              ) : exportStatus === 'error' ? (
+                <>
+                  <AlertCircle className="h-4 w-4" />
+                  Export Failed
+                </>
+              ) : (
+                <>
+                  <Database className="h-4 w-4" />
+                  Export All Activities
+                </>
+              )}
+            </button>
           </div>
         </section>
 

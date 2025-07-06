@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { 
   Home, 
   Search, 
@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   RefreshCw,
-  Activity
+  Activity,
+  Command
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings-store'
@@ -24,9 +25,20 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const { autoRefresh, updateSettings } = useSettingsStore()
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Sync search query with URL params when on search page
+  useEffect(() => {
+    if (pathname === '/search') {
+      const q = searchParams.get('q') || ''
+      setSearchQuery(q)
+    }
+  }, [pathname, searchParams])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -36,6 +48,13 @@ export function Navigation() {
       window.dispatchEvent(event)
     }
     setTimeout(() => setIsRefreshing(false), 1000)
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    }
   }
 
   return (
@@ -73,6 +92,24 @@ export function Navigation() {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-2">
+            {/* Search Input */}
+            <form onSubmit={handleSearch} className="hidden md:block">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search activities..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  data-search-input
+                  className="pl-9 pr-4 py-1.5 w-64 text-sm bg-muted rounded-md border-0 focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  <Command className="h-3 w-3" />K
+                </kbd>
+              </div>
+            </form>
+
             {/* Refresh button */}
             <button
               onClick={handleRefresh}

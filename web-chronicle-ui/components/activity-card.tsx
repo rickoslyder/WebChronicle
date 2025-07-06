@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
@@ -11,12 +11,17 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Search
+  Search,
+  Check,
+  Image
 } from 'lucide-react'
 import { ActivityLogWithTags } from '@/types'
 import { cn, formatDate, formatDuration, getRelativeTime } from '@/lib/utils'
 import { useSummary } from '@/hooks/use-activities'
 import { useSettingsStore } from '@/stores/settings-store'
+import { useActivityStore } from '@/providers/activity-store-provider'
+import { useHoverDelay } from '@/hooks/use-hover-delay'
+import { ScreenshotPreview } from '@/components/screenshot-preview'
 
 interface ActivityCardProps {
   activity: ActivityLogWithTags
@@ -25,8 +30,35 @@ interface ActivityCardProps {
 
 export function ActivityCard({ activity, isCompact = false }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const cardRef = useRef<HTMLDivElement>(null)
   const showSummaries = useSettingsStore((state) => state.showSummaries)
+  const showScreenshots = useSettingsStore((state) => state.showScreenshots ?? true)
+  const { 
+    isSelectionMode, 
+    selectedActivityIds, 
+    toggleActivitySelection 
+  } = useActivityStore((state) => ({
+    isSelectionMode: state.isSelectionMode,
+    selectedActivityIds: state.selectedActivityIds,
+    toggleActivitySelection: state.toggleActivitySelection,
+  }))
+  
+  const isSelected = mounted ? selectedActivityIds.has(activity.id) : false
+  
+  const {
+    isHovered,
+    handleMouseEnter,
+    handleMouseLeave,
+    cleanup
+  } = useHoverDelay({ enterDelay: 800, leaveDelay: 300 })
+
+  useEffect(() => {
+    setMounted(true)
+    return cleanup
+  }, [cleanup])
+  
   const { data: summaryData, isLoading: isSummaryLoading } = useSummary(
     isExpanded && showSummaries ? activity.id : ''
   )
@@ -39,6 +71,12 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
     // Navigate to search page with the activity title as query
     const searchQuery = encodeURIComponent(activity.title || activity.url)
     router.push(`/search?q=${searchQuery}`)
+  }
+
+  const handleClick = () => {
+    if (isSelectionMode) {
+      toggleActivitySelection(activity.id)
+    }
   }
 
   if (isCompact) {
@@ -67,7 +105,29 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
   }
 
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow animate-in">
+    <div 
+      ref={cardRef}
+      className={cn(
+        "border rounded-lg p-4 hover:shadow-md transition-shadow animate-in relative",
+        isSelectionMode && "cursor-pointer",
+        isSelected && "ring-2 ring-primary"
+      )}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Selection Checkbox */}
+      {isSelectionMode && (
+        <div 
+          className={cn(
+            "absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center bg-background",
+            isSelected ? "bg-primary border-primary" : "border-muted-foreground"
+          )}
+        >
+          {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
@@ -172,6 +232,16 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
               )}
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Screenshot Preview */}
+      {showScreenshots && mounted && isHovered && !isSelectionMode && (
+        <div className="pointer-events-none absolute top-0 left-full ml-4 z-50">
+          <ScreenshotPreview 
+            url={activity.url} 
+            title={activity.title}
+          />
         </div>
       )}
     </div>

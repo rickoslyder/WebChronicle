@@ -66,6 +66,7 @@ export function SearchView() {
           value={inputValue}
           onChange={handleInputChange}
           className="w-full pl-10 pr-4 py-3 bg-background border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+          data-search-input
         />
         {isLoading && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />

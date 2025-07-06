@@ -13,6 +13,7 @@ const defaultSettings: Settings = {
   authToken: AUTH_TOKEN,
   autoRefresh: false,
   showSummaries: true,
+  showScreenshots: true,
   defaultView: 'timeline',
   theme: 'system',
 }
@@ -31,6 +32,7 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         autoRefresh: state.autoRefresh,
         showSummaries: state.showSummaries,
+        showScreenshots: state.showScreenshots,
         defaultView: state.defaultView,
         theme: state.theme,
         // Don't persist API credentials in localStorage
