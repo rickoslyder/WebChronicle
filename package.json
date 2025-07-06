@@ -1,0 +1,33 @@
+{
+  "name": "webchronicle",
+  "version": "1.0.0",
+  "description": "Personal web activity tracking system with AI-powered insights",
+  "private": true,
+  "workspaces": [
+    "activity-log-worker",
+    "activity-log-ui",
+    "personal-web-activity-chronicle-extension"
+  ],
+  "scripts": {
+    "deploy:worker": "cd activity-log-worker && npm run deploy",
+    "deploy:ui": "echo 'UI is deployed automatically via GitHub push to Cloudflare Pages'",
+    "deploy:all": "npm run deploy:worker && npm run deploy:ui",
+    "dev:worker": "cd activity-log-worker && npm run dev",
+    "dev:ui": "cd activity-log-ui && open index.html",
+    "build:extension": "cd personal-web-activity-chronicle-extension && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rickoslyder/WebChronicle.git"
+  },
+  "keywords": [
+    "web-tracking",
+    "activity-log",
+    "chrome-extension",
+    "cloudflare-workers",
+    "ai",
+    "vectorize"
+  ],
+  "author": "rickoslyder",
+  "license": "MIT"
+}
