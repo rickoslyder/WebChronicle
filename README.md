@@ -12,12 +12,43 @@ WebChronicle consists of three main components:
 
 ## Features
 
-- 🔍 **Semantic Search**: AI-powered search using vector embeddings
+### Core Features
+- 🔍 **Advanced Search**: Three search modes - AI semantic search, full-text search, and advanced query syntax
 - 🌓 **Dark/Light Mode**: Automatic theme detection with manual toggle
-- 📊 **Analytics Dashboard**: Visual insights into browsing patterns
+- 📊 **Analytics Dashboard**: Comprehensive insights with heatmaps, productivity scoring, and domain network visualization
 - 🔄 **Offline Sync**: Queue activities when offline, sync when reconnected
 - 🤖 **AI Summaries**: Automatic content summarization and tagging
 - 🔐 **Privacy-First**: All data stored in your own Cloudflare infrastructure
+
+### New in Phase 4
+- 📈 **Advanced Analytics**:
+  - GitHub-style activity heatmap
+  - Hourly activity distribution
+  - Reading speed and engagement metrics
+  - Productivity scoring by content type
+  - Weekly/monthly reports with trends
+  - Domain relationship network graph
+- 🔎 **Enhanced Search**:
+  - Advanced query syntax (field:value, AND/OR/NOT operators)
+  - Date range filters (after:7d, before:2024-01-01)
+  - Time spent filters (time:>300)
+  - Tag and domain filtering
+- 📁 **Smart Collections**: 
+  - Automatic activity grouping by patterns
+  - 8 predefined collections (Work, Learning, Entertainment, etc.)
+  - AI-suggested collections based on your browsing
+- 📱 **Progressive Web App**:
+  - Install as desktop/mobile app
+  - Offline functionality
+  - Background sync
+  - App shortcuts
+- 🎯 **Additional Features**:
+  - Batch operations for multiple activities
+  - Data export (JSON, CSV, Markdown)
+  - Activity comparison view
+  - Screenshot preview support
+  - Keyboard shortcuts
+  - Real-time updates
 
 ## Quick Start
 
