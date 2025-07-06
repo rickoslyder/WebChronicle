@@ -6,6 +6,7 @@ import { Filter as FilterIcon, Loader2, CheckSquare, GitCompare } from 'lucide-r
 import { useActivities } from '@/hooks/use-activities'
 import { ActivityCard } from '@/components/activity-card'
 import { FilterBar } from '@/components/filter-bar'
+import { BatchOperations } from '@/components/batch-operations'
 import { parseActivityTags, groupByDate } from '@/lib/utils'
 import { useActivityStore } from '@/providers/activity-store-provider'
 import { useRouter } from 'next/navigation'
@@ -139,6 +140,8 @@ export function Timeline() {
                   Compare
                 </button>
               )}
+              
+              <BatchOperations selectedIds={Array.from(selectedActivityIds)} />
               
               <button
                 onClick={clearSelection}

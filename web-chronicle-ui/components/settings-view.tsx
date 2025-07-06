@@ -214,6 +214,7 @@ export function SettingsView() {
                 <option value="timeline">Timeline</option>
                 <option value="analytics">Analytics</option>
                 <option value="search">Search</option>
+                <option value="insights">Insights</option>
               </select>
             </div>
 

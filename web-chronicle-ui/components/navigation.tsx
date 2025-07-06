@@ -12,7 +12,8 @@ import {
   X,
   RefreshCw,
   Activity,
-  Command
+  Command,
+  Brain
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings-store'
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/', label: 'Timeline', icon: Home },
   { href: '/search', label: 'Search', icon: Search },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/insights', label: 'Insights', icon: Brain },
 ]
 
 export function Navigation() {

@@ -13,7 +13,8 @@ import {
   ChevronUp,
   Search,
   Check,
-  Image
+  Image,
+  FileDown
 } from 'lucide-react'
 import { ActivityLogWithTags } from '@/types'
 import { cn, formatDate, formatDuration, getRelativeTime } from '@/lib/utils'
@@ -22,6 +23,7 @@ import { useSettingsStore } from '@/stores/settings-store'
 import { useActivityStore } from '@/providers/activity-store-provider'
 import { useHoverDelay } from '@/hooks/use-hover-delay'
 import { ScreenshotPreview } from '@/components/screenshot-preview'
+import { api } from '@/lib/api'
 
 interface ActivityCardProps {
   activity: ActivityLogWithTags
@@ -71,6 +73,23 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
     // Navigate to search page with the activity title as query
     const searchQuery = encodeURIComponent(activity.title || activity.url)
     router.push(`/search?q=${searchQuery}`)
+  }
+
+  const handleArchivePdf = async () => {
+    try {
+      const blob = await api.generatePdf(activity.url)
+      
+      // Create download link
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${activity.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date(activity.visitedAt).toISOString().split('T')[0]}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to generate PDF:', error)
+      alert('Failed to generate PDF. Please try again.')
+    }
   }
 
   const handleClick = () => {
@@ -192,6 +211,14 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
         >
           <Search className="h-4 w-4" />
           Find Similar
+        </button>
+        <button
+          onClick={handleArchivePdf}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-secondary hover:bg-secondary/80 rounded-md transition-colors"
+          title="Save as PDF"
+        >
+          <FileDown className="h-4 w-4" />
+          Save PDF
         </button>
       </div>
 
