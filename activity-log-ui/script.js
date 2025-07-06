@@ -128,7 +128,7 @@ class WebChronicle {
         try {
             const response = await fetch(`${this.workerUrl}/logs`, {
                 headers: {
-                    'Authorization': `Bearer ${this.authToken}`
+                    'X-Auth-Token': this.authToken
                 }
             });
             
@@ -265,7 +265,7 @@ class WebChronicle {
         try {
             const response = await fetch(`${this.workerUrl}/log-summary/${logId}`, {
                 headers: {
-                    'Authorization': `Bearer ${this.authToken}`
+                    'X-Auth-Token': this.authToken
                 }
             });
             
@@ -371,11 +371,11 @@ class WebChronicle {
             const container = document.getElementById('activity-grid');
             container.innerHTML = '<div class="loading-message">Searching with AI...</div>';
             
-            const response = await fetch(`${config.WORKER_URL}/search`, {
+            const response = await fetch(`${this.workerUrl}/search`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Auth-Token': config.AUTH_TOKEN
+                    'X-Auth-Token': this.authToken
                 },
                 body: JSON.stringify({
                     query: query,
