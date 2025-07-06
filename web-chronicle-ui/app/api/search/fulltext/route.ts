@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthToken } from '@/lib/auth'
 
+export const runtime = 'edge'
+
 interface SearchMatch {
   field: string
   snippet: string

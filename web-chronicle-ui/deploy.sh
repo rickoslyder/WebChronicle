@@ -23,12 +23,12 @@ fi
 # Deploy to Cloudflare Pages
 echo "☁️  Deploying to Cloudflare Pages..."
 npx wrangler pages deploy .vercel/output/static \
-    --project-name=web-chronicle-ui \
+    --project-name=web-chronicle-next \
     --branch=main
 
 if [ $? -eq 0 ]; then
     echo "✅ Deployment successful!"
-    echo "🌐 Your UI should be available at: https://web-chronicle-ui.pages.dev/"
+    echo "🌐 Your UI should be available at: https://web-chronicle-next.pages.dev/"
 else
     echo "❌ Deployment failed!"
     exit 1

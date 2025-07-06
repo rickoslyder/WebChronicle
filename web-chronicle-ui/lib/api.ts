@@ -71,7 +71,7 @@ class ApiClient {
       searchParams.set('tags', params.filter.tags.join(','))
     }
 
-    const endpoint = `/api/logs?${searchParams.toString()}`
+    const endpoint = `/logs?${searchParams.toString()}`
     const response = await this.fetcher<{
       logs: ActivityLog[]
       total: number
@@ -89,7 +89,7 @@ class ApiClient {
   }
 
   async getActivity(id: string): Promise<ActivityLog> {
-    return this.fetcher<ActivityLog>(`/api/logs/${id}`)
+    return this.fetcher<ActivityLog>(`/logs/${id}`)
   }
 
   async getSummary(id: string): Promise<{ summary: string }> {

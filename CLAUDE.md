@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 WebChronicle is a personal web activity tracking system consisting of:
 - **Chrome Extension**: Captures browsing activity, content, and scroll behavior
 - **Cloudflare Worker**: Backend API for processing, storing, and searching activity logs
-- **Activity Log UI**: Web interface for viewing logged activities
+- **Legacy UI (activity-log-ui)**: Vanilla JS web interface deployed as a Worker
+- **New UI (web-chronicle-ui)**: React/Next.js interface deployed to Pages (experimental)
 
 ## Essential Commands
 
@@ -98,7 +99,7 @@ npm run dev
 ## Deployment
 
 ### Worker Deployment
-The worker now has an automated deployment script that handles environment variables:
+The backend API worker has an automated deployment script:
 ```bash
 cd activity-log-worker
 npm run deploy  # Uses ./deploy.sh script
@@ -108,26 +109,44 @@ The script automatically:
 - Loads CLOUDFLARE_API_TOKEN from `.env.local`
 - Deploys to production with all bindings configured
 - Shows deployment URL and version ID
+- **Production URL**: `https://activity-log-worker.{account}.workers.dev`
 
-### UI Deployment
-The Activity Log UI deploys automatically via GitHub push:
-- **Production URL**: https://web-chronicle-ui.pages.dev/
-- **Source**: `activity-log-ui/` directory in main branch
+### UI Deployments
+
+#### Legacy UI (Vanilla JS) - `activity-log-ui/`
+Deployed as a Cloudflare Worker that serves static assets:
+```bash
+cd activity-log-ui
+npx wrangler deploy
+# OR from root:
+npm run deploy:ui
+```
+- **Production URL**: `https://web-chronicle-ui.{account}.workers.dev/`
+- **Platform**: Cloudflare Workers (not Pages)
 - **Build**: No build step required (static files)
-- **Cache**: Controlled via `_headers` file
 
-To update the UI:
-1. Make changes to files in `activity-log-ui/`
-2. Commit and push to GitHub
-3. Cloudflare Pages automatically deploys within ~45 seconds
+#### New UI (React/Next.js) - `web-chronicle-ui/`
+Deployed to Cloudflare Pages:
+```bash
+cd web-chronicle-ui
+./deploy.sh
+```
+- **Production URL**: `https://web-chronicle-next.pages.dev/`
+- **Platform**: Cloudflare Pages
+- **Build**: Uses `@cloudflare/next-on-pages` adapter
+- **Note**: Currently has deployment issues; use legacy UI for production
 
 ### Environment Variables
 Set these in respective platforms:
 - **Worker**: Use `.env.local` file (not committed)
-- **UI (Cloudflare Pages)**: Set in dashboard
+  - `CLOUDFLARE_API_TOKEN`: For deployment
+  - `AUTH_TOKEN`: Set as secret in worker dashboard
+- **Legacy UI**: Configuration via `config.js`
   - `WORKER_URL`: Your worker URL
   - `AUTH_TOKEN`: Authentication token
-- **UI (Local)**: Edit `config.js` directly
+- **New UI**: Use `.env.local` for build-time variables
+  - `NEXT_PUBLIC_WORKER_URL`: Your worker URL
+  - `NEXT_PUBLIC_AUTH_TOKEN`: Authentication token
 
 ## Configuration Files
 - **Extension**: `manifest.json`, `lib/constants.js`

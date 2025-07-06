@@ -156,6 +156,19 @@ WebChronicle/
 - **AI**: Cloudflare AI (Llama model for summarization)
 - **Extension**: Chrome Extension Manifest V3
 
+## Deployment
+
+The system runs on Cloudflare's global edge network:
+
+- **Backend Worker**: `https://activity-log-worker.*.workers.dev`
+  - Deploy: `cd activity-log-worker && npm run deploy`
+- **Legacy UI**: `https://web-chronicle-ui.*.workers.dev` (Production)
+  - Deploy: `npm run deploy:ui`
+- **New UI**: `https://web-chronicle-next.pages.dev` (Experimental)
+  - Deploy: `cd web-chronicle-ui && ./deploy.sh`
+
+See [CLAUDE.md](CLAUDE.md) for detailed deployment instructions.
+
 ## Contributing
 
 1. Fork the repository

@@ -1,10 +1,9 @@
-name = "web-chronicle-ui"
+name = "web-chronicle-next"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = ".vercel/output/static"
 
-# Build configuration for Next.js on Cloudflare Pages
-[build]
-command = "npx @cloudflare/next-on-pages"
+# Functions configuration
+compatibility_flags = ["nodejs_compat"]
 
 # Environment variables
 [vars]
@@ -13,7 +12,3 @@ NODE_VERSION = "20"
 # Define your bindings here
 [env.production]
 vars = { }
-
-# Functions configuration
-[[compatibility_flags]]
-compatibility_flags = ["nodejs_compat"]

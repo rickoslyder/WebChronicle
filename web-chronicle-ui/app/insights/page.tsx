@@ -4,6 +4,7 @@ import { InsightsView } from '@/components/insights-view'
 import { AppLayout } from '@/components/app-layout'
 import { Loader2 } from 'lucide-react'
 
+export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
