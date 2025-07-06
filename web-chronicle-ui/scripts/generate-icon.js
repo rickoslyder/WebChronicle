@@ -1,0 +1,14 @@
+const fs = require('fs');
+const path = require('path');
+
+// Create a simple SVG icon
+const svg = `
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#3b82f6" rx="100"/>
+  <text x="256" y="300" font-family="Arial, sans-serif" font-size="200" font-weight="bold" text-anchor="middle" fill="white">W</text>
+</svg>
+`;
+
+// Save SVG
+fs.writeFileSync(path.join(__dirname, '../public/icon.svg'), svg);
+console.log('Icon generated successfully!');
