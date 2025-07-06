@@ -102,3 +102,20 @@ export function extractDomain(url: string): string {
     return 'unknown'
   }
 }
+
+export function groupByDomain<T extends { url: string }>(
+  items: T[]
+): Map<string, T[]> {
+  const groups = new Map<string, T[]>()
+  
+  items.forEach(item => {
+    const domain = extractDomain(item.url)
+    const existing = groups.get(domain) || []
+    groups.set(domain, [...existing, item])
+  })
+  
+  // Sort domains by activity count (descending)
+  return new Map(
+    [...groups.entries()].sort((a, b) => b[1].length - a[1].length)
+  )
+}

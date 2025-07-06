@@ -14,7 +14,8 @@ import {
   Search,
   Check,
   Image,
-  FileDown
+  FileDown,
+  Share2
 } from 'lucide-react'
 import { ActivityLogWithTags } from '@/types'
 import { cn, formatDate, formatDuration, getRelativeTime } from '@/lib/utils'
@@ -23,7 +24,9 @@ import { useSettingsStore } from '@/stores/settings-store'
 import { useActivityStore } from '@/providers/activity-store-provider'
 import { useHoverDelay } from '@/hooks/use-hover-delay'
 import { ScreenshotPreview } from '@/components/screenshot-preview'
+import { ActivityDetailDrawer } from '@/components/activity-detail-drawer'
 import { api } from '@/lib/api'
+import { toast } from 'sonner'
 
 interface ActivityCardProps {
   activity: ActivityLogWithTags
@@ -33,6 +36,7 @@ interface ActivityCardProps {
 export function ActivityCard({ activity, isCompact = false }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false)
   const router = useRouter()
   const cardRef = useRef<HTMLDivElement>(null)
   const showSummaries = useSettingsStore((state) => state.showSummaries)
@@ -65,17 +69,20 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
     isExpanded && showSummaries ? activity.id : ''
   )
 
-  const handleToggleExpand = () => {
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation()
     setIsExpanded(!isExpanded)
   }
 
-  const handleFindSimilar = () => {
+  const handleFindSimilar = (e: React.MouseEvent) => {
+    e.stopPropagation()
     // Navigate to search page with the activity title as query
     const searchQuery = encodeURIComponent(activity.title || activity.url)
     router.push(`/search?q=${searchQuery}`)
   }
 
-  const handleArchivePdf = async () => {
+  const handleArchivePdf = async (e: React.MouseEvent) => {
+    e.stopPropagation()
     try {
       const blob = await api.generatePdf(activity.url)
       
@@ -95,31 +102,85 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
   const handleClick = () => {
     if (isSelectionMode) {
       toggleActivitySelection(activity.id)
+    } else {
+      setShowDetailDrawer(true)
+    }
+  }
+  
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    const shareText = `Check out this interesting article: ${activity.title}`
+    const shareUrl = activity.url
+    
+    // Use native share API if available
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: activity.title,
+          text: shareText,
+          url: shareUrl,
+        })
+      } catch (error) {
+        // User cancelled share
+      }
+    } else {
+      // Fallback to copying to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`)
+        toast.success('Link copied to clipboard!')
+      } catch (error) {
+        console.error('Failed to copy:', error)
+      }
     }
   }
 
   if (isCompact) {
     return (
-      <div className="flex items-center justify-between p-3 border-b hover:bg-accent/50 transition-colors">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium truncate">{activity.title}</h3>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-            <span className="flex items-center gap-1">
-              <Globe className="h-3 w-3" />
-              {activity.domain}
-            </span>
-            <span>{getRelativeTime(activity.visitedAt)}</span>
-          </div>
-        </div>
-        <a
-          href={activity.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-2 hover:bg-accent rounded-md transition-colors"
+      <>
+        <div 
+          className={cn(
+            "flex items-center justify-between p-3 border-b hover:bg-accent/50 transition-colors cursor-pointer",
+            isSelectionMode && isSelected && "bg-accent/50"
+          )}
+          onClick={handleClick}
         >
-          <ExternalLink className="h-4 w-4" />
-        </a>
-      </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium truncate">{activity.title}</h3>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+              <span className="flex items-center gap-1">
+                <Globe className="h-3 w-3" />
+                {activity.domain}
+              </span>
+              <span>{getRelativeTime(activity.visitedAt)}</span>
+            </div>
+          </div>
+          {isSelectionMode && (
+            <div 
+              className={cn(
+                "w-5 h-5 rounded border-2 flex items-center justify-center mr-2",
+                isSelected ? "bg-primary border-primary" : "border-muted-foreground"
+              )}
+            >
+              {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+            </div>
+          )}
+          <a
+            href={activity.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 hover:bg-accent rounded-md transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+        <ActivityDetailDrawer
+          activity={activity}
+          isOpen={showDetailDrawer}
+          onClose={() => setShowDetailDrawer(false)}
+        />
+      </>
     )
   }
 
@@ -127,8 +188,7 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
     <div 
       ref={cardRef}
       className={cn(
-        "border rounded-lg p-4 hover:shadow-md transition-shadow animate-in relative",
-        isSelectionMode && "cursor-pointer",
+        "border rounded-lg p-4 hover:shadow-md transition-shadow animate-in relative cursor-pointer",
         isSelected && "ring-2 ring-primary"
       )}
       onClick={handleClick}
@@ -170,6 +230,7 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
           rel="noopener noreferrer"
           className="p-2 hover:bg-accent rounded-md transition-colors ml-2"
           title="Open in new tab"
+          onClick={(e) => e.stopPropagation()}
         >
           <ExternalLink className="h-4 w-4" />
         </a>
@@ -219,6 +280,14 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
         >
           <FileDown className="h-4 w-4" />
           Save PDF
+        </button>
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-secondary hover:bg-secondary/80 rounded-md transition-colors"
+          title="Share activity"
+        >
+          <Share2 className="h-4 w-4" />
+          Share
         </button>
       </div>
 
@@ -271,6 +340,13 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
           />
         </div>
       )}
+      
+      {/* Detail Drawer */}
+      <ActivityDetailDrawer
+        activity={activity}
+        isOpen={showDetailDrawer}
+        onClose={() => setShowDetailDrawer(false)}
+      />
     </div>
   )
 }

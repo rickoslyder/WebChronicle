@@ -252,6 +252,25 @@ class ApiClient {
 
     return response.blob()
   }
+
+  // Activity notes
+  async getActivityNotes(activityId: string): Promise<{ notes: string }> {
+    try {
+      return await this.fetcher<{ notes: string }>(`/api/logs/${activityId}/notes`)
+    } catch (error: any) {
+      if (error.status === 404) {
+        return { notes: '' }
+      }
+      throw error
+    }
+  }
+
+  async updateActivityNotes(activityId: string, notes: string): Promise<void> {
+    await this.fetcher(`/api/logs/${activityId}/notes`, {
+      method: 'PUT',
+      body: JSON.stringify({ notes }),
+    })
+  }
 }
 
 // Export singleton instance

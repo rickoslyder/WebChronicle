@@ -49,13 +49,6 @@ export function SearchView() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Search Your Activities</h1>
-        <p className="text-muted-foreground">
-          Search uses semantic understanding to find relevant content even when exact words don't match
-        </p>
-      </div>
-
       {/* Search input */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

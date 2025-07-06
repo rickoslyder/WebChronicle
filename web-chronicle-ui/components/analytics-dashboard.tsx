@@ -17,8 +17,11 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Calendar, TrendingUp, Globe, Tag, Clock, Activity } from 'lucide-react'
-import { useAnalytics, useDomainStats, useTagStats } from '@/hooks/use-activities'
+import { useAnalytics, useDomainStats, useTagStats, useActivities } from '@/hooks/use-activities'
 import { cn } from '@/lib/utils'
+import { ActivityHeatmap } from './analytics/activity-heatmap'
+import { HourlyHeatmap } from './analytics/hourly-heatmap'
+import { ReadingMetrics } from './analytics/reading-metrics'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
@@ -27,8 +30,10 @@ export function AnalyticsDashboard() {
   const { data: analytics, isLoading: analyticsLoading } = useAnalytics(timeRange)
   const { data: domains, isLoading: domainsLoading } = useDomainStats()
   const { data: tags, isLoading: tagsLoading } = useTagStats()
+  const { data: activitiesData, isLoading: activitiesLoading } = useActivities()
 
-  const isLoading = analyticsLoading || domainsLoading || tagsLoading
+  const isLoading = analyticsLoading || domainsLoading || tagsLoading || activitiesLoading
+  const allActivities = activitiesData?.pages.flatMap(page => page.data) || []
 
   if (isLoading) {
     return (
@@ -101,6 +106,21 @@ export function AnalyticsDashboard() {
           value={domains?.length.toString() || '0'}
           trend="All time"
         />
+      </div>
+
+      {/* Heatmaps */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-card border rounded-lg p-6">
+          <ActivityHeatmap activities={allActivities} weeks={12} />
+        </div>
+        <div className="bg-card border rounded-lg p-6">
+          <HourlyHeatmap activities={allActivities} />
+        </div>
+      </div>
+
+      {/* Reading Metrics */}
+      <div className="bg-card border rounded-lg p-6 mb-8">
+        <ReadingMetrics activities={allActivities} />
       </div>
 
       {/* Charts */}

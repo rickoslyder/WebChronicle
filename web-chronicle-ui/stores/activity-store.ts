@@ -7,6 +7,7 @@ export type ActivityState = {
   viewMode: 'timeline' | 'grid' | 'compact'
   selectedActivityIds: Set<string>
   isSelectionMode: boolean
+  groupBy: 'none' | 'date' | 'domain'
 }
 
 export type ActivityActions = {
@@ -18,6 +19,7 @@ export type ActivityActions = {
   toggleActivitySelection: (id: string) => void
   clearSelection: () => void
   getSelectedCount: () => number
+  setGroupBy: (groupBy: ActivityState['groupBy']) => void
 }
 
 export type ActivityStore = ActivityState & ActivityActions
@@ -28,6 +30,7 @@ export const defaultInitState: ActivityState = {
   viewMode: 'timeline',
   selectedActivityIds: new Set(),
   isSelectionMode: false,
+  groupBy: 'date',
 }
 
 export const createActivityStore = (
@@ -59,6 +62,7 @@ export const createActivityStore = (
       }),
     clearSelection: () => set({ selectedActivityIds: new Set() }),
     getSelectedCount: () => get().selectedActivityIds.size,
+    setGroupBy: (groupBy) => set({ groupBy }),
   }))
 }
 

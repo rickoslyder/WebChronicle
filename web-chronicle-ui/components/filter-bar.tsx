@@ -16,6 +16,8 @@ import { useActivityStore } from '@/providers/activity-store-provider'
 import { DateFilter } from './filters/date-filter'
 import { DomainFilter } from './filters/domain-filter'
 import { TagFilter } from './filters/tag-filter'
+import { SearchFilter } from './filters/search-filter'
+import { GroupByFilter } from './filters/group-by-filter'
 
 export function FilterBar() {
   const [showFilters, setShowFilters] = useState(false)
@@ -24,7 +26,8 @@ export function FilterBar() {
   const hasActiveFilters = !!(
     filter.dateRange || 
     filter.domains?.length || 
-    filter.tags?.length
+    filter.tags?.length ||
+    filter.searchQuery
   )
 
   return (
@@ -102,6 +105,8 @@ export function FilterBar() {
           </div>
 
           <div className="space-y-4">
+            <SearchFilter />
+            <GroupByFilter />
             <DateFilter />
             <DomainFilter />
             <TagFilter />

@@ -1,12 +1,12 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
-import { SearchView } from '@/components/search-view'
+import { EnhancedSearchView } from '@/components/enhanced-search-view'
 import { AppLayout } from '@/components/app-layout'
 import { Loader2 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Search | WebChronicle',
-  description: 'Search your browsing history with semantic understanding',
+  description: 'Search your browsing history with AI-powered semantic or full-text search',
 }
 
 export default function SearchPage() {
@@ -20,7 +20,7 @@ export default function SearchPage() {
             </div>
           }
         >
-          <SearchView />
+          <EnhancedSearchView />
         </Suspense>
       </div>
     </AppLayout>

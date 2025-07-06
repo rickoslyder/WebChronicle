@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { Timeline } from '@/components/timeline'
 import { AppLayout } from '@/components/app-layout'
+import { TimelineSkeleton } from '@/components/activity-skeleton'
 import { api } from '@/lib/api'
 import { QUERY_KEYS } from '@/lib/constants'
 
@@ -30,25 +31,5 @@ export default async function HomePage() {
         </HydrationBoundary>
       </main>
     </AppLayout>
-  )
-}
-
-function TimelineSkeleton() {
-  return (
-    <div className="space-y-4">
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="border rounded-lg p-4 animate-pulse"
-        >
-          <div className="h-6 bg-muted rounded w-3/4 mb-2" />
-          <div className="h-4 bg-muted rounded w-1/2 mb-3" />
-          <div className="flex gap-4">
-            <div className="h-4 bg-muted rounded w-24" />
-            <div className="h-4 bg-muted rounded w-24" />
-          </div>
-        </div>
-      ))}
-    </div>
   )
 }
