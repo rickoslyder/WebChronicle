@@ -26,3 +26,6 @@ index_name = "webchronicle"
 [observability]
 enabled = true
 head_sampling_rate = 1
+
+[observability.logs]
+enabled = true

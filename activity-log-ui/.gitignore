@@ -4,3 +4,12 @@
 # Optional Editor/IDE specific files
 .vscode/
 .idea/
+
+# Configuration
+config.js
+
+# Dependencies
+node_modules/
+
+# Wrangler
+.wrangler/
