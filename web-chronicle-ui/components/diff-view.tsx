@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { diffLines, Change } from 'diff'
+import { diffLines } from 'diff'
 import { cn } from '@/lib/utils'
 
 interface DiffViewProps {

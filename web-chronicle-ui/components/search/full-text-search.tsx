@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { Search, FileText, Tag, Link, Calendar, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Search, FileText, Link, Calendar, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
 import { ActivityLog } from '@/types'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -266,7 +265,7 @@ export function FullTextSearch() {
                           <div key={i} className="text-sm text-muted-foreground">
                             <span className="font-medium">{match.field}:</span>{' '}
                             <span className="italic">
-                              "...{highlightMatch(match.snippet, query)}..."
+                              &quot;...{highlightMatch(match.snippet, query)}...&quot;
                             </span>
                           </div>
                         ))}
@@ -310,7 +309,7 @@ export function FullTextSearch() {
                             {match.field} (position {match.position}):
                           </span>
                           <div className="mt-1 italic">
-                            "...{highlightMatch(match.snippet, query)}..."
+                            &quot;...{highlightMatch(match.snippet, query)}...&quot;
                           </div>
                         </div>
                       ))}
@@ -344,7 +343,7 @@ export function FullTextSearch() {
           {!isLoading && results.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No results found for "{query}"</p>
+              <p>No results found for &quot;{query}&quot;</p>
               <p className="text-sm mt-2">Try adjusting your search options or query</p>
             </div>
           )}

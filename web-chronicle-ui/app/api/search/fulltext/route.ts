@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     
     // Transform the data to match our frontend expectations
-    const results: SearchResult[] = data.results.map((item: any) => ({
+    const results: SearchResult[] = data.results.map((item: SearchResult) => ({
       ...item,
       domain: new URL(item.url).hostname,
     }))

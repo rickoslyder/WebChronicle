@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, useCallback, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { QUERY_KEYS } from '@/lib/constants'
-import { debounce } from '@/lib/utils'
 
 export function useSearch(initialQuery: string = '') {
   const [query, setQuery] = useState(initialQuery)
@@ -10,9 +9,13 @@ export function useSearch(initialQuery: string = '') {
 
   // Debounce the query
   const debouncedSetQuery = useCallback(
-    debounce((value: string) => {
-      setDebouncedQuery(value)
-    }, 300),
+    (() => {
+      let timeout: NodeJS.Timeout | null = null
+      return (value: string) => {
+        if (timeout) clearTimeout(timeout)
+        timeout = setTimeout(() => setDebouncedQuery(value), 300)
+      }
+    })(),
     []
   )
 

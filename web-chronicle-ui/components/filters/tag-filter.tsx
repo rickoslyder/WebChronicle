@@ -6,7 +6,8 @@ import { useActivityStore } from '@/providers/activity-store-provider'
 
 export function TagFilter() {
   const { data: tags, isLoading } = useTagStats()
-  const { filter, setFilter } = useActivityStore()
+  const filter = useActivityStore((state) => state.filter)
+  const setFilter = useActivityStore((state) => state.setFilter)
   
   const selectedTags = filter.tags || []
 

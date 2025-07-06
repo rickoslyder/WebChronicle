@@ -6,7 +6,8 @@ import { useActivityStore } from '@/providers/activity-store-provider'
 
 export function DomainFilter() {
   const { data: domains, isLoading } = useDomainStats()
-  const { filter, setFilter } = useActivityStore()
+  const filter = useActivityStore((state) => state.filter)
+  const setFilter = useActivityStore((state) => state.setFilter)
   
   const selectedDomains = filter.domains || []
 

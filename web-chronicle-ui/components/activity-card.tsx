@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
   Clock, 
@@ -13,7 +12,6 @@ import {
   ChevronUp,
   Search,
   Check,
-  Image,
   FileDown,
   Share2
 } from 'lucide-react'
@@ -121,7 +119,7 @@ export function ActivityCard({ activity, isCompact = false }: ActivityCardProps)
           text: shareText,
           url: shareUrl,
         })
-      } catch (error) {
+      } catch {
         // User cancelled share
       }
     } else {

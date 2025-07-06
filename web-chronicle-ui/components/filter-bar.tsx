@@ -3,9 +3,6 @@
 import { useState } from 'react'
 import { 
   Filter, 
-  Calendar, 
-  Globe, 
-  Tag, 
   X,
   LayoutGrid,
   List,
@@ -21,7 +18,10 @@ import { GroupByFilter } from './filters/group-by-filter'
 
 export function FilterBar() {
   const [showFilters, setShowFilters] = useState(false)
-  const { filter, viewMode, setViewMode } = useActivityStore()
+  const filter = useActivityStore((state) => state.filter)
+  const viewMode = useActivityStore((state) => state.viewMode)
+  const setViewMode = useActivityStore((state) => state.setViewMode)
+  const clearFilter = useActivityStore((state) => state.clearFilter)
   
   const hasActiveFilters = !!(
     filter.dateRange || 
@@ -114,7 +114,7 @@ export function FilterBar() {
 
           {hasActiveFilters && (
             <button
-              onClick={() => useActivityStore.getState().clearFilter()}
+              onClick={() => clearFilter()}
               className="w-full mt-4 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-md text-sm"
             >
               Clear All Filters

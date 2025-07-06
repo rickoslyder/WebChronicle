@@ -28,9 +28,12 @@ export function SearchView() {
 
   // Debounced search handler
   const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      setQuery(value)
-    }, 300),
+    (value: string) => {
+      const debouncedFn = debounce(() => {
+        setQuery(value)
+      }, 300)
+      debouncedFn()
+    },
     []
   )
 
@@ -135,7 +138,7 @@ export function SearchView() {
       {data && data.length === 0 && query && (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-2">
-            No results found for "{query}"
+            No results found for &quot;{query}&quot;
           </p>
           <p className="text-sm text-muted-foreground">
             Try different keywords or broader search terms
@@ -150,7 +153,7 @@ export function SearchView() {
             Enter a search query to find activities
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Examples: "react hooks", "authentication", "performance optimization"
+            Examples: &quot;react hooks&quot;, &quot;authentication&quot;, &quot;performance optimization&quot;
           </p>
         </div>
       )}

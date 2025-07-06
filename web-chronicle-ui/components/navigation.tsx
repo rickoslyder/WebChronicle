@@ -11,9 +11,9 @@ import {
   Menu,
   X,
   RefreshCw,
-  Activity,
   Command,
-  Brain
+  Brain,
+  Download
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings-store'
@@ -23,6 +23,7 @@ const navItems = [
   { href: '/search', label: 'Search', icon: Search },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/insights', label: 'Insights', icon: Brain },
+  { href: '/export', label: 'Export', icon: Download },
 ]
 
 export function Navigation() {
@@ -31,7 +32,7 @@ export function Navigation() {
   const searchParams = useSearchParams()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const { autoRefresh, updateSettings } = useSettingsStore()
+  const { } = useSettingsStore()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Sync search query with URL params when on search page

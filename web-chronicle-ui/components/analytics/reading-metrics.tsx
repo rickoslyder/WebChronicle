@@ -192,7 +192,7 @@ export function ReadingMetrics({ activities }: ReadingMetricsProps) {
         </h4>
         <ul className="text-sm space-y-1 list-disc list-inside">
           {metrics.avgReadingSpeed > 300 && (
-            <li>You're a fast reader! Your average speed is above 300 WPM.</li>
+            <li>You&apos;re a fast reader! Your average speed is above 300 WPM.</li>
           )}
           {metrics.avgEngagement > 70 && (
             <li>You show high engagement with content, spending quality time reading.</li>
@@ -216,7 +216,7 @@ function MetricCard({
   subtext,
   valueClass = ''
 }: { 
-  icon: any
+  icon: React.ElementType
   label: string
   value: string
   subtext: string

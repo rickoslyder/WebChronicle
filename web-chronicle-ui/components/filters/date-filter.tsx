@@ -6,7 +6,8 @@ import { useActivityStore } from '@/providers/activity-store-provider'
 import { cn } from '@/lib/utils'
 
 export function DateFilter() {
-  const { filter, setFilter } = useActivityStore()
+  const filter = useActivityStore((state) => state.filter)
+  const setFilter = useActivityStore((state) => state.setFilter)
   const [showCustom, setShowCustom] = useState(false)
 
   const handlePreset = (days: number | 'all') => {

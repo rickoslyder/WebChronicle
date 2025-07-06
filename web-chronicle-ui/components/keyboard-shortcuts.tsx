@@ -8,18 +8,21 @@ export function KeyboardShortcuts() {
   useGlobalKeyboardShortcuts()
   
   const clearSelection = useActivityStore((state) => state.clearSelection)
-  const setSelectionMode = useActivityStore((state) => state.setSelectionMode)
+  const isSelectionMode = useActivityStore((state) => state.isSelectionMode)
+  const toggleSelectionMode = useActivityStore((state) => state.toggleSelectionMode)
   
   useEffect(() => {
     // Listen for clear selection mode event
     const handleClearSelectionMode = () => {
       clearSelection()
-      setSelectionMode(false)
+      if (isSelectionMode) {
+        toggleSelectionMode() // Turn off selection mode
+      }
     }
     
     window.addEventListener('clear-selection-mode', handleClearSelectionMode)
     return () => window.removeEventListener('clear-selection-mode', handleClearSelectionMode)
-  }, [clearSelection, setSelectionMode])
+  }, [clearSelection, isSelectionMode, toggleSelectionMode])
   
   return null
 }

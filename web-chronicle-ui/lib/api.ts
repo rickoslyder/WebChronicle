@@ -122,7 +122,6 @@ class ApiClient {
   // Analytics
   async getAnalytics(days: number = 30): Promise<AnalyticsData> {
     // For now, compute analytics client-side
-    const to = new Date()
     const from = new Date()
     from.setDate(from.getDate() - days)
     
@@ -257,8 +256,8 @@ class ApiClient {
   async getActivityNotes(activityId: string): Promise<{ notes: string }> {
     try {
       return await this.fetcher<{ notes: string }>(`/api/logs/${activityId}/notes`)
-    } catch (error: any) {
-      if (error.status === 404) {
+    } catch (error) {
+      if ((error as ApiError).status === 404) {
         return { notes: '' }
       }
       throw error

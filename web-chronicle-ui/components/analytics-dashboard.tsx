@@ -13,10 +13,9 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { Calendar, TrendingUp, Globe, Tag, Clock, Activity } from 'lucide-react'
+import { TrendingUp, Globe, Tag, Clock, Activity } from 'lucide-react'
 import { useAnalytics, useDomainStats, useTagStats, useActivities } from '@/hooks/use-activities'
 import { cn } from '@/lib/utils'
 import { ActivityHeatmap } from './analytics/activity-heatmap'
@@ -207,7 +206,7 @@ export function AnalyticsDashboard() {
                 cy="50%"
                 outerRadius={80}
                 label={({ domain, percent }) => 
-                  `${domain} ${(percent * 100).toFixed(0)}%`
+                  `${domain} ${((percent || 0) * 100).toFixed(0)}%`
                 }
               >
                 {topDomains.map((_, index) => (
@@ -266,7 +265,7 @@ function StatsCard({
   value, 
   trend 
 }: { 
-  icon: any
+  icon: React.ElementType
   label: string
   value: string
   trend: string

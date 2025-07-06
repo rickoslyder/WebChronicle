@@ -5,7 +5,8 @@ import { useActivityStore } from '@/providers/activity-store-provider'
 import { cn } from '@/lib/utils'
 
 export function GroupByFilter() {
-  const { groupBy, setGroupBy } = useActivityStore()
+  const groupBy = useActivityStore((state) => state.groupBy)
+  const setGroupBy = useActivityStore((state) => state.setGroupBy)
 
   return (
     <div>

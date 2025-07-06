@@ -4,6 +4,8 @@ import { EnhancedSearchView } from '@/components/enhanced-search-view'
 import { AppLayout } from '@/components/app-layout'
 import { Loader2 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Search | WebChronicle',
   description: 'Search your browsing history with AI-powered semantic or full-text search',

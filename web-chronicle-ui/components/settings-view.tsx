@@ -18,10 +18,20 @@ import {
 import { useSettingsStore } from '@/stores/settings-store'
 import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
-import { ActivityLog } from '@/types'
+import { ActivityLog, Settings } from '@/types'
 
 export function SettingsView() {
-  const { settings, updateSettings, resetSettings, exportSettings, importSettings } = useSettingsStore()
+  const settingsStore = useSettingsStore()
+  const { updateSettings, resetSettings } = settingsStore
+  const settings: Settings = {
+    workerUrl: settingsStore.workerUrl,
+    authToken: settingsStore.authToken,
+    autoRefresh: settingsStore.autoRefresh,
+    showSummaries: settingsStore.showSummaries,
+    showScreenshots: settingsStore.showScreenshots,
+    defaultView: settingsStore.defaultView,
+    theme: settingsStore.theme,
+  }
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [importError, setImportError] = useState<string>('')
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle')
@@ -34,14 +44,14 @@ export function SettingsView() {
       await new Promise(resolve => setTimeout(resolve, 500))
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 2000)
-    } catch (error) {
+    } catch {
       setSaveStatus('error')
       setTimeout(() => setSaveStatus('idle'), 3000)
     }
   }
 
   const handleExport = () => {
-    const data = exportSettings()
+    const data = JSON.stringify(settings, null, 2)
     const blob = new Blob([data], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -59,9 +69,10 @@ export function SettingsView() {
     reader.onload = (e) => {
       try {
         const data = e.target?.result as string
-        importSettings(data)
+        const importedSettings = JSON.parse(data) as Partial<Settings>
+        updateSettings(importedSettings)
         setImportError('')
-      } catch (error) {
+      } catch {
         setImportError('Invalid settings file')
       }
     }
@@ -187,7 +198,7 @@ export function SettingsView() {
                 {themes.map(({ value, label, icon: Icon }) => (
                   <button
                     key={value}
-                    onClick={() => updateSettings({ theme: value as any })}
+                    onClick={() => updateSettings({ theme: value as 'light' | 'dark' | 'system' })}
                     className={cn(
                       "flex items-center justify-center gap-2 px-4 py-2 rounded-md border transition-colors",
                       settings.theme === value
@@ -208,7 +219,7 @@ export function SettingsView() {
               </label>
               <select
                 value={settings.defaultView}
-                onChange={(e) => updateSettings({ defaultView: e.target.value as any })}
+                onChange={(e) => updateSettings({ defaultView: e.target.value as 'timeline' | 'analytics' | 'search' | 'insights' })}
                 className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="timeline">Timeline</option>

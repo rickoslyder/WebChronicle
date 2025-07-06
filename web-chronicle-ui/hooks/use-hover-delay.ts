@@ -8,8 +8,8 @@ interface UseHoverDelayOptions {
 export function useHoverDelay(options: UseHoverDelayOptions = {}) {
   const { enterDelay = 500, leaveDelay = 300 } = options
   const [isHovered, setIsHovered] = useState(false)
-  const enterTimeoutRef = useRef<NodeJS.Timeout>()
-  const leaveTimeoutRef = useRef<NodeJS.Timeout>()
+  const enterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleMouseEnter = useCallback(() => {
     // Clear any pending leave timeout

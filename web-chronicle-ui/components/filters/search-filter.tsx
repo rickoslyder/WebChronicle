@@ -6,18 +6,22 @@ import { useActivityStore } from '@/providers/activity-store-provider'
 import debounce from 'lodash.debounce'
 
 export function SearchFilter() {
-  const { filter, setFilter } = useActivityStore()
+  const filter = useActivityStore((state) => state.filter)
+  const setFilter = useActivityStore((state) => state.setFilter)
   const [inputValue, setInputValue] = useState(filter.searchQuery || '')
 
   // Debounced filter update
   const debouncedSetFilter = useCallback(
-    debounce((value: string) => {
-      setFilter({ 
-        ...filter, 
-        searchQuery: value || undefined 
-      })
-    }, 300),
-    [filter]
+    (value: string) => {
+      const debouncedFn = debounce(() => {
+        setFilter({ 
+          ...filter, 
+          searchQuery: value || undefined 
+        })
+      }, 300)
+      debouncedFn()
+    },
+    [filter, setFilter]
   )
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

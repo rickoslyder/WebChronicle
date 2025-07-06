@@ -7,10 +7,15 @@ export interface ActivityLog {
   contentLength: number
   scrollDepth: number
   timeOnPage: number
+  timeSpent: number
+  wordCount?: number
   createdAt: string
   tagsJson?: string
+  tags?: string[]
   summary?: string
   contentHash?: string
+  content?: string
+  favicon?: string
 }
 
 export interface ActivityLogWithTags extends ActivityLog {

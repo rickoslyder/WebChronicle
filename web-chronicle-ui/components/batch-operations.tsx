@@ -2,19 +2,14 @@
 
 import { useState } from 'react'
 import { 
-  Download, 
   FileDown, 
-  Trash2, 
   MoreVertical,
   FileJson,
   FileSpreadsheet,
   Loader2
 } from 'lucide-react'
 import { api } from '@/lib/api'
-import { ActivityLog } from '@/types'
 import { cn } from '@/lib/utils'
-import { useQueryClient } from '@tanstack/react-query'
-import { QUERY_KEYS } from '@/lib/constants'
 
 interface BatchOperationsProps {
   selectedIds: string[]
@@ -23,7 +18,6 @@ interface BatchOperationsProps {
 export function BatchOperations({ selectedIds }: BatchOperationsProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
-  const queryClient = useQueryClient()
 
   const handleExport = async (format: 'json' | 'csv') => {
     setIsExporting(true)

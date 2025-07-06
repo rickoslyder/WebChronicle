@@ -18,7 +18,6 @@
       "Bash(git commit:*)",
       "Bash(node:*)",
       "WebFetch(domain:supabase.com)",
-      "Bash(DB_PASSWORD=edMRixD7cPkTjLiX npx supabase db push --dry-run)",
       "Bash(npm run build:*)",
       "Bash(npm run type-check:*)",
       "Bash(npm run:*)",
@@ -58,7 +57,6 @@
       "Bash(npm search:*)",
       "Bash(tree:*)",
       "mcp__playwright__browser_tab_new",
-      "Bash(CLOUDFLARE_API_TOKEN=WxNcf42r_FwiQFYeg7qo3voXBfswMHD0b6uZ2rll npx wrangler deploy)",
       "Bash(chmod:*)",
       "Bash(./deploy.sh)",
       "mcp__playwright__browser_console_messages",
@@ -74,7 +72,5 @@
     "deny": []
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "playwright"
-  ]
+  "enabledMcpjsonServers": ["playwright"]
 }

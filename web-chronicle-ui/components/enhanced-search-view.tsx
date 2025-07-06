@@ -36,8 +36,8 @@ export function EnhancedSearchView() {
               AI-Powered Semantic Search
             </h3>
             <p className="text-sm text-blue-700 dark:text-blue-200">
-              Uses AI to understand meaning and context. Finds relevant content even when exact words don't match.
-              Great for conceptual searches like "authentication best practices" or "performance optimization".
+              Uses AI to understand meaning and context. Finds relevant content even when exact words don&apos;t match.
+              Great for conceptual searches like &quot;authentication best practices&quot; or &quot;performance optimization&quot;.
             </p>
           </div>
           <SearchView />

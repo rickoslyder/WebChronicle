@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { Filter as FilterIcon, Loader2, CheckSquare, GitCompare, Wifi, WifiOff } from 'lucide-react'
+import { Loader2, CheckSquare, GitCompare, Wifi, WifiOff } from 'lucide-react'
 import { useActivities } from '@/hooks/use-activities'
 import { useRealtimeActivities } from '@/hooks/use-realtime-activities'
 import { ActivityCard } from '@/components/activity-card'
@@ -13,6 +13,7 @@ import { parseActivityTags, groupByDate, groupByDomain } from '@/lib/utils'
 import { useActivityStore } from '@/providers/activity-store-provider'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { ActivityLogWithTags } from '@/types'
 
 export function Timeline() {
   const [mounted, setMounted] = useState(false)
@@ -25,7 +26,8 @@ export function Timeline() {
     isSelectionMode, 
     selectedActivityIds, 
     toggleSelectionMode,
-    clearSelection 
+    clearSelection,
+    setFilter
   } = useActivityStore((state) => ({
     filter: state.filter,
     viewMode: state.viewMode,
@@ -34,6 +36,7 @@ export function Timeline() {
     selectedActivityIds: state.selectedActivityIds,
     toggleSelectionMode: state.toggleSelectionMode,
     clearSelection: state.clearSelection,
+    setFilter: state.setFilter,
   }))
 
   useEffect(() => {
@@ -150,10 +153,10 @@ export function Timeline() {
         </div>
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
-            No activities match "{filter.searchQuery}"
+            No activities match &quot;{filter.searchQuery}&quot;
           </p>
           <button
-            onClick={() => useActivityStore.getState().setFilter({ ...filter, searchQuery: undefined })}
+            onClick={() => setFilter({ ...filter, searchQuery: undefined })}
             className="text-primary hover:underline"
           >
             Clear search
@@ -244,7 +247,7 @@ export function Timeline() {
         )}
         {!hasNextPage && allActivities.length > 0 && (
           <p className="text-muted-foreground text-sm">
-            You've reached the end of your activities
+            You&apos;ve reached the end of your activities
           </p>
         )}
       </div>
@@ -252,7 +255,7 @@ export function Timeline() {
   )
 }
 
-function TimelineView({ activities, groupBy }: { activities: any[], groupBy: 'none' | 'date' | 'domain' }) {
+function TimelineView({ activities, groupBy }: { activities: ActivityLogWithTags[], groupBy: 'none' | 'date' | 'domain' }) {
   if (groupBy === 'none') {
     return (
       <div className="space-y-4">
@@ -304,7 +307,7 @@ function TimelineView({ activities, groupBy }: { activities: any[], groupBy: 'no
   )
 }
 
-function GridView({ activities, groupBy }: { activities: any[], groupBy: 'none' | 'date' | 'domain' }) {
+function GridView({ activities, groupBy }: { activities: ActivityLogWithTags[], groupBy: 'none' | 'date' | 'domain' }) {
   if (groupBy === 'none') {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -356,7 +359,7 @@ function GridView({ activities, groupBy }: { activities: any[], groupBy: 'none' 
   )
 }
 
-function CompactView({ activities, groupBy }: { activities: any[], groupBy: 'none' | 'date' | 'domain' }) {
+function CompactView({ activities, groupBy }: { activities: ActivityLogWithTags[], groupBy: 'none' | 'date' | 'domain' }) {
   if (groupBy === 'none') {
     return (
       <div className="border rounded-lg overflow-hidden">

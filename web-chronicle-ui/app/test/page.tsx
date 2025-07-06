@@ -11,6 +11,7 @@ export default function TestPage() {
     contentLength: 5000,
     scrollDepth: 0.75,
     timeOnPage: 180,
+    timeSpent: 180,
     createdAt: new Date().toISOString(),
     tags: ['react', 'web-development', 'javascript'],
     tagsJson: JSON.stringify(['react', 'web-development', 'javascript']),

@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo } from 'react'
-import { format } from 'date-fns'
 import { ActivityLog } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +9,9 @@ interface HourlyHeatmapProps {
 }
 
 export function HourlyHeatmap({ activities }: HourlyHeatmapProps) {
+  const dayLabels = useMemo(() => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], [])
+  const hourLabels = useMemo(() => Array.from({ length: 24 }, (_, i) => i), [])
+  
   const heatmapData = useMemo(() => {
     // Initialize 7x24 grid (days x hours)
     const grid: number[][] = Array(7).fill(null).map(() => Array(24).fill(0))
@@ -29,9 +31,6 @@ export function HourlyHeatmap({ activities }: HourlyHeatmapProps) {
       row.map(value => maxValue > 0 ? (value / maxValue) * 100 : 0)
     )
   }, [activities])
-  
-  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const hourLabels = Array.from({ length: 24 }, (_, i) => i)
   
   const getColorIntensity = (percentage: number) => {
     if (percentage === 0) return 'bg-muted'
@@ -66,14 +65,14 @@ export function HourlyHeatmap({ activities }: HourlyHeatmapProps) {
     })
     
     return times.sort((a, b) => b.percentage - a.percentage).slice(0, 3)
-  }, [heatmapData])
+  }, [heatmapData, dayLabels])
   
   return (
     <div className="w-full">
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">Weekly Activity Pattern</h3>
         <p className="text-sm text-muted-foreground">
-          When you're most active throughout the week
+          When you&apos;re most active throughout the week
         </p>
       </div>
       
@@ -103,11 +102,11 @@ export function HourlyHeatmap({ activities }: HourlyHeatmapProps) {
                 </div>
                 <div className="flex gap-1 flex-1">
                   {heatmapData[dayIndex].map((percentage, hourIndex) => {
-                    const count = Math.round((percentage / 100) * 
-                      Math.max(...activities.map(a => {
-                        const d = new Date(a.visitedAt)
-                        return d.getDay() === dayIndex && d.getHours() === hourIndex ? 1 : 0
-                      }).filter(Boolean).length || 1))
+                    const activitiesAtTime = activities.filter(a => {
+                      const d = new Date(a.visitedAt)
+                      return d.getDay() === dayIndex && d.getHours() === hourIndex
+                    })
+                    const count = activitiesAtTime.length
                     
                     return (
                       <div

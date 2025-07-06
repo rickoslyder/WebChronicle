@@ -5,18 +5,15 @@ import {
   Brain, 
   TrendingUp, 
   Clock, 
-  Globe, 
   Lightbulb, 
   Target,
   Calendar,
   BarChart3,
-  Loader2,
   RefreshCw
 } from 'lucide-react'
-import { useAnalytics } from '@/hooks/use-analytics'
+import { useAnalytics } from '@/hooks/use-activities'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { ActivityLog } from '@/types'
 
 interface Insight {
   type: 'productivity' | 'pattern' | 'suggestion' | 'anomaly'
@@ -37,6 +34,7 @@ export function InsightsView() {
     if (analyticsData) {
       generateInsights()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyticsData, selectedTimeRange])
 
   const generateInsights = async () => {
@@ -222,7 +220,7 @@ function MetricCard({
   value, 
   subtitle 
 }: { 
-  icon: any
+  icon: React.ElementType
   label: string
   value: string | number
   subtitle: string 

@@ -170,7 +170,7 @@ export function ActivityDetailDrawer({ activity, isOpen, onClose }: ActivityDeta
                         <span>{Math.round(activity.scrollDepth * 100)}% read</span>
                       </div>
                     )}
-                    {activity.wordCount !== null && (
+                    {activity.wordCount && (
                       <div className="flex items-center gap-2 text-sm">
                         <Hash className="h-4 w-4 text-muted-foreground" />
                         <span>{activity.wordCount.toLocaleString()} words</span>
