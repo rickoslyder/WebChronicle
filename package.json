@@ -14,7 +14,8 @@
     "deploy:all": "npm run deploy:worker && npm run deploy:ui",
     "dev:worker": "cd activity-log-worker && npm run dev",
     "dev:ui": "cd activity-log-ui && npx wrangler dev",
-    "build:extension": "cd personal-web-activity-chronicle-extension && npm run build"
+    "build:extension": "cd personal-web-activity-chronicle-extension && npm run build",
+    "build:pages": "./build-pages.sh"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,7 @@
+{
+  "build": {
+    "rootDirectory": "web-chronicle-ui",
+    "command": "npx @cloudflare/next-on-pages@1",
+    "outputDirectory": ".vercel/output/static"
+  }
+}
