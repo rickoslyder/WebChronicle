@@ -1,11 +1,9 @@
 import { Suspense } from 'react'
 import { Metadata } from 'next'
-import { AnalyticsDashboard } from '@/components/analytics-dashboard'
+import { AnalyticsDashboardWrapper } from '@/components/analytics-dashboard-wrapper'
 import { AppLayout } from '@/components/app-layout'
 import { Loader2 } from 'lucide-react'
 
-export const runtime = 'edge'
-export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Analytics | WebChronicle',
@@ -23,7 +21,7 @@ export default function AnalyticsPage() {
             </div>
           }
         >
-          <AnalyticsDashboard />
+          <AnalyticsDashboardWrapper />
         </Suspense>
       </div>
     </AppLayout>

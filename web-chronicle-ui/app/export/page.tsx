@@ -2,8 +2,6 @@ import { Metadata } from 'next'
 import { DataExport } from '@/components/export/data-export'
 import { AppLayout } from '@/components/app-layout'
 
-export const runtime = 'edge'
-export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Export Data | WebChronicle',
